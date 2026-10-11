@@ -100,6 +100,24 @@ class ConnectionEngine(
         /** 显示配置（finger_scroll 能力等） */
         fun onDisplayConfig(fingerScroll: Boolean)
 
+        /** 远端打印作业：服务器打印到 PDF 后通知客户端下载（api/print/<name>） */
+        fun onPrintDocument(name: String, sizeBytes: Long)
+
+        /** 服务器要求摄像头上行发送关键帧 */
+        fun onWebcamKeyframeRequest() { }
+
+        /** 服务器按需要求客户端开启/停止硬件捕获（subject: webcam / microphone） */
+        fun onCaptureDemand(subject: String, on: Boolean) { }
+
+        /** 麦克风上行被服务端拒绝（策略禁用 / viewer 角色） */
+        fun onMicrophoneDisabled() { }
+
+        /** 摄像头上行被服务端拒绝 */
+        fun onWebcamDisabled() { }
+
+        /** system 命令回执（command_error / command_done） */
+        fun onSystemCommand(action: String, detail: String?) { }
+
         /** 统计快照（每秒） */
         fun onStats(stats: Stats)
     }
@@ -520,6 +538,21 @@ class ConnectionEngine(
 
             text == "AUDIO_DISABLED" -> main.post { listener.onAudioUnavailable("disabled") }
 
+            text == "MICROPHONE_DISABLED" -> main.post { listener.onMicrophoneDisabled() }
+
+            text == "WEBCAM_DISABLED" -> main.post { listener.onWebcamDisabled() }
+
+            text == "WEBCAM_KEYFRAME" -> main.post { listener.onWebcamKeyframeRequest() }
+
+            text.startsWith("CAPTURE_DEMAND ") -> {
+                // CAPTURE_DEMAND <subject> <0|1>：按需开启/停止硬件上行
+                val parts = text.split(" ")
+                if (parts.size >= 3) {
+                    val on = parts[2].trim() == "1"
+                    main.post { listener.onCaptureDemand(parts[1].trim(), on) }
+                }
+            }
+
             text.startsWith("PIPELINE_RESETTING") -> {
                 main.post { listener.onVideoStopped() }
                 mediaSink?.onPipelineReset()
@@ -607,6 +640,21 @@ class ConnectionEngine(
                     }
                 }
                 "pipeline_status", "server_apps", "stream_info" -> { /* 暂不消费 */ }
+
+                // 远端打印：PDF 已落在服务器打印池，客户端拉取后进入系统打印界面
+                "print_document" -> {
+                    val name = o.optString("name")
+                    val size = o.optLong("size_bytes", 0L)
+                    if (name.isNotEmpty()) main.post { listener.onPrintDocument(name, size) }
+                }
+
+                "system" -> {
+                    val action = o.optString("action")
+                    if (action.isNotEmpty()) {
+                        val detail = o.optString("message", o.optString("error", null))
+                        main.post { listener.onSystemCommand(action, detail) }
+                    }
+                }
             }
         } catch (_: Exception) {
         }
@@ -790,6 +838,24 @@ class ConnectionEngine(
 
     /** 提交文本（文字输入框 / 输入法）：co,end,text */
     fun commitText(text: String) = sendInput("co,end,$text")
+
+    // ------------------------------------------------------------------
+    // 二进制上行（麦克风 0x02 / 摄像头 0x06 —— 官方 websockets 模式上行链路）
+    // ------------------------------------------------------------------
+
+    /** 发送二进制帧（麦克风/摄像头上行）。返回是否成功入队。 */
+    fun sendBinary(data: ByteArray): Boolean {
+        val ws = webSocket ?: return false
+        return try {
+            ws.send(okio.ByteString.of(*data))
+        } catch (e: Exception) {
+            Log.w(TAG, "sendBinary failed: ${e.message}")
+            false
+        }
+    }
+
+    /** 输入门禁（麦克风/摄像头上行同样受 view-only 限制） */
+    fun canSendUplink(): Boolean = inputAllowed && !closed.get()
 
     /** 游戏手柄（标准布局：A=0 B=1 X=2 Y=3 LB=4 RB=5 LT=6 RT=7 Back=8 Start=9
      *  LS=10 RS=11 DUp=12 DDown=13 DLeft=14 DRight=15 Guide=16；轴 LX=0 LY=1 RX=2 RY=3） */

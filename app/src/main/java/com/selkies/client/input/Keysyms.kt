@@ -90,6 +90,42 @@ object Keysyms {
     const val MENU = 0xff67
     const val NUM_LOCK = 0xff7f
 
+    /** 主键（可选修饰键组合）名称反查：快捷键显示用 */
+    fun nameOf(keysym: Int): String? = when (keysym) {
+        BACKSPACE -> "Backspace"; TAB -> "Tab"; RETURN -> "Enter"; ESCAPE -> "Esc"
+        SPACE -> "Space"; DELETE -> "Del"; INSERT -> "Ins"
+        HOME -> "Home"; END -> "End"; PAGE_UP -> "PgUp"; PAGE_DOWN -> "PgDn"
+        LEFT -> "←"; UP -> "↑"; RIGHT -> "→"; DOWN -> "↓"
+        F1 -> "F1"; F2 -> "F2"; F3 -> "F3"; F4 -> "F4"; F5 -> "F5"; F6 -> "F6"
+        F7 -> "F7"; F8 -> "F8"; F9 -> "F9"; F10 -> "F10"; F11 -> "F11"; F12 -> "F12"
+        PRINT -> "Print"; PAUSE -> "Pause"; SCROLL_LOCK -> "ScrLk"
+        CAPS_LOCK -> "CapsLk"; NUM_LOCK -> "NumLk"; MENU -> "Menu"
+        KP_ENTER -> "NumEnter"
+        CTRL_L, CTRL_R -> "Ctrl"; ALT_L, ALT_R -> "Alt"
+        SHIFT_L, SHIFT_R -> "Shift"; SUPER_L, SUPER_R -> "Super"
+        else -> when {
+            keysym in 0x21..0x7e -> keysym.toChar().toString()
+            keysym in 'a'.code..'z'.code -> keysym.toChar().uppercase()
+            keysym in 'A'.code..'Z'.code -> keysym.toChar().toString()
+            else -> null
+        }
+    }
+
+    /** Android metaState（物理键盘修饰键状态）→ X11 修饰键 keysym 集合 */
+    fun modifiersFromMetaState(metaState: Int): List<Int> = buildList {
+        if (metaState and KeyEvent.META_CTRL_ON != 0) add(CTRL_L)
+        if (metaState and KeyEvent.META_ALT_ON != 0) add(ALT_L)
+        if (metaState and KeyEvent.META_SHIFT_ON != 0) add(SHIFT_L)
+        if (metaState and KeyEvent.META_META_ON != 0) add(SUPER_L)
+    }
+
+    fun isModifierKeysym(keysym: Int): Boolean = keysym in MODIFIER_KEYSYMS
+
+    val MODIFIER_KEYSYMS = setOf(
+        SHIFT_L, SHIFT_R, CTRL_L, CTRL_R, ALT_L, ALT_R,
+        SUPER_L, SUPER_R, META_L, META_R
+    )
+
     /**
      * Android KeyEvent → X11 keysym（覆盖硬键盘/蓝牙键盘主键位）。
      * 返回 null 表示无需转发（音量键等交还系统）。

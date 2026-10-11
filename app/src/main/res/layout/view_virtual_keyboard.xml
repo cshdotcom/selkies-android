@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 虚拟键盘（底部抽屉）：修饰键行 + 功能键行 + 方向/控制键行 + 文字输入行 -->
+<!-- 虚拟键盘（底部抽屉）：
+     快捷键栏（横向滚动，动态填充）+ 修饰键行 + F 键 + 控制键 + IME 直通输入按钮 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/virtual_keyboard"
@@ -13,10 +14,33 @@
     android:paddingBottom="6dp"
     android:visibility="gone">
 
+    <!-- 快捷键栏：横向滚动（预置+自定义，动态生成） -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/kb_shortcut_row"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/kb_manage_shortcuts"
+                style="@style/ShortcutBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:text="@string/shortcut_manage" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
     <!-- 修饰键行 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="44dp"
+        android:layout_marginTop="3dp"
         android:orientation="horizontal">
 
         <Button
@@ -149,35 +173,12 @@
             android:layout_weight="1" android:text="@string/kb_enter" />
     </LinearLayout>
 
-    <!-- 文字输入行（唤起输入法，提交走 co,end） -->
-    <LinearLayout
+    <!-- IME 直通输入按钮：点击直接唤起系统输入法，实时输入（无需点发送） -->
+    <Button
+        android:id="@+id/kb_ime"
+        style="@style/KbKey"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="46dp"
         android:layout_marginTop="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/kb_text_input"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_kb_key"
-            android:hint="@string/kb_type_here"
-            android:imeOptions="actionSend"
-            android:inputType="text"
-            android:paddingHorizontal="12dp"
-            android:singleLine="true"
-            android:textColor="@color/white"
-            android:textColorHint="#66FFFFFF"
-            android:textSize="14sp" />
-
-        <Button
-            android:id="@+id/kb_text_send" style="@style/KbKey"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginStart="6dp"
-            android:minWidth="72dp"
-            android:text="@string/kb_send" />
-    </LinearLayout>
+        android:text="@string/kb_ime_hint" />
 </LinearLayout>

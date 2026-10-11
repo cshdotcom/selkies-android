@@ -111,11 +111,82 @@
     <string name="kb_fkeys">F1–F12</string>
     <string name="kb_type_here">在此输入文字，回车发送</string>
     <string name="kb_send">发送</string>
+    <string name="kb_ime_hint">⌨ 输入文字（直接唤起输入法，实时上屏，回车=Enter）</string>
     <string name="stats_fps">帧率</string>
     <string name="stats_bitrate">码率</string>
     <string name="stats_rtt">往返延时</string>
     <string name="stats_res">分辨率</string>
     <string name="stats_codec">编码</string>
+
+    <!-- v1.1.0 新增：面板按钮 -->
+    <string name="panel_files">文件管理</string>
+    <string name="panel_screenshot">截图</string>
+    <string name="panel_mic">麦克风</string>
+    <string name="panel_webcam">摄像头</string>
+    <string name="panel_fullscreen">全屏</string>
+    <string name="fullscreen_on">已进入全屏（点右上角把手退出）</string>
+
+    <!-- 截图 -->
+    <string name="screenshot_saving">正在截取远程画面…</string>
+    <string name="screenshot_saved">截图已保存到下载目录 ✓</string>
+    <string name="screenshot_failed">截图失败</string>
+
+    <!-- 麦克风 / 摄像头上行 -->
+    <string name="mic_on">麦克风：开（远端虚拟麦克风）</string>
+    <string name="mic_off">麦克风：关</string>
+    <string name="mic_no_encoder">此设备不支持 Opus 编码，无法上行麦克风</string>
+    <string name="mic_error">麦克风错误：%s</string>
+    <string name="mic_perm_refused">未授予麦克风权限，请到系统设置开启</string>
+    <string name="mic_disabled_remote">远端已禁用麦克风上行</string>
+    <string name="webcam_on">摄像头：开（远端虚拟摄像头）</string>
+    <string name="webcam_off">摄像头：关</string>
+    <string name="webcam_error">摄像头错误：%s</string>
+    <string name="webcam_perm_refused">未授予摄像头权限，请到系统设置开启</string>
+    <string name="webcam_disabled_remote">远端已禁用摄像头上行</string>
+
+    <!-- 打印 -->
+    <string name="print_received">收到远程打印作业：%s</string>
+    <string name="command_error">远端命令错误</string>
+
+    <!-- 有线键盘模式 -->
+    <string name="hw_keyboard_on">已插入键盘：切换到鼠标 + 有线键盘模式</string>
+    <string name="hw_keyboard_off">键盘已拔出：恢复触屏模式</string>
+
+    <!-- 快捷键管理 -->
+    <string name="shortcuts_title">快捷键</string>
+    <string name="shortcuts_hint">点击组合即发送；长按列表可删除自定义项。\n插入物理键盘后，在添加对话框中直接按下组合键即可录制。</string>
+    <string name="shortcut_add">添加快捷键</string>
+    <string name="shortcut_manage">＋管理</string>
+    <string name="shortcut_delete">删除</string>
+    <string name="shortcut_builtin">预置</string>
+    <string name="shortcut_name">名称</string>
+    <string name="shortcut_name_hint">如：Ctrl+Alt+T</string>
+    <string name="shortcut_modifiers">修饰键（可多选）</string>
+    <string name="shortcut_pick_key">选择主键</string>
+    <string name="shortcut_recorded">已捕获：%s</string>
+    <string name="shortcut_record_hint">提示：插入有线/蓝牙键盘后，直接在此对话框按下组合键（如 Ctrl+Shift+Esc）即可自动录制；或点亮修饰键后从键位表选择主键。</string>
+    <string name="shortcut_need_key">请先选择主键</string>
+    <string name="shortcut_saved">快捷键已保存</string>
+
+    <!-- 文件管理器 -->
+    <string name="files_empty">目录为空</string>
+    <string name="files_selected">已选 %d 项</string>
+    <string name="select_all">全选/反选</string>
+    <string name="download">下载</string>
+    <string name="downloading">正在下载 %d 个文件…</string>
+    <string name="download_done_all">下载完成：%d 个文件已存入下载目录 ✓</string>
+    <string name="download_done_part">下载完成：%1$d/%2$d（部分失败）</string>
+    <string name="uploading_n">正在上传 %d 个文件…</string>
+    <string name="upload_done_all">上传完成：%d 个文件 ✓</string>
+    <string name="back">返回</string>
+
+    <!-- 服务器列表批量操作 -->
+    <string name="batch_delete">删除所选</string>
+    <string name="batch_test">测试所选</string>
+    <string name="batch_connect_all">全部连接</string>
+    <string name="batch_selected_count">已选 %d 台</string>
+    <string name="batch_delete_confirm">确定删除所选 %d 台服务器？</string>
+    <string name="batch_deleted">已删除 %d 台</string>
 
     <!-- 设置 -->
     <string name="pref_quality">画质与性能</string>

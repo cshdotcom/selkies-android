@@ -26,11 +26,16 @@
 - 分辨率协商：`SETTINGS.initialClientWidth/Height` + `r,WxH,primary`，屏幕旋转自动重设桌面分辨率（可关）
 - IDR 关键帧手动请求按钮（花屏恢复）+ 管道重置自动补关键帧
 
-### 输入系统
+### 输入系统（v1.1.0 全面重构）
+- **IME 直通输入**（全新）：点键盘按钮直接唤起系统输入法，打字**实时**逐词上屏（`co,end`），**回车发送真正的 Enter 键**（`kd/ku 0xff0d`），退格/编辑键全部以键事件发送 —— 彻底告别"输入框+发送按钮"模式
+- **快捷键系统**（全新）：
+  - 预置 24 组常用组合（Ctrl+C/V/X/Z/A/S/F/P、Ctrl+Shift+Z、Alt+Tab、Alt+F4、Ctrl+Alt+T 终端、Ctrl+Alt+L 锁屏、Ctrl+Shift+Esc、Ctrl+Tab 等）
+  - **自定义快捷键**：两种录入方式 —— ① 软键盘组合（点亮修饰键 + 键位表选主键）② **物理键盘直接录制**（插入键盘按下组合即捕获）
+  - 会话内底部快捷键栏，点击即发送
+- **有线键盘模式**（全新）：`InputManager` 即插即用检测，插入外接键盘自动切换"鼠标+有线键盘模式"（收起软键盘，物理键直通），拔出自动恢复触屏模式
 - **权限模式**：控制模式（键鼠全控）/ 仅查看模式（不发任何输入事件，双保险门禁）
   - 服务端 view-only 密码 / viewer 角色限制同样会被识别并强制仅查看
 - **虚拟键盘**：Ctrl/Alt/Shift/Super 粘滞修饰键、Esc/Tab/Del/Home/End/PgUp/PgDn、方向键、F1–F12、退格/回车
-- **文字输入条**：调起系统输入法，回车以 `co,end,<text>` 提交（中文输入法友好）
 - **硬件键盘**：蓝牙/OTG 键盘按键直通（X11 Keysym 映射）
 - **触摸手势**（两种模式可切换）：
   - 触摸板模式：单指滑动=相对移动（带灵敏度增益）、轻点=左键、长按拖拽、双指轻点=右键/中键
@@ -39,8 +44,24 @@
   - 双指捏合=本地缩放（1–4x，缩放态双指拖动平移，长按 IDR 按钮重置）
 - **游戏手柄**：标准布局（A/B/X/Y/LB/RB/LT/RT/Back/Start/摇杆按压/十字键/Guide），`js,c/b/a/d` 协议直通
 
+### 远程硬件（v1.1.0 新增，对齐官方 web client 全部可传递硬件）
+- **麦克风上行**：手机麦克风 → 24kHz 单声道 Opus（MediaCodec 编码）→ `0x02` 二进制帧 → 远端 PulseAudio/PipeWire 虚拟麦克风设备（远端应用可直接采集你的声音）
+- **摄像头上行**：手机摄像头（Camera2 零拷贝 Surface 管线）→ H.264 编码 → `[0x06][codec][flags][payload]` 帧 → 远端 V4L2 虚拟摄像头（旋转/翻转元数据按官方 flags 位传递，服务器端校验）
+- **响应服务器按需采集**：`CAPTURE_DEMAND webcam/microphone 1` 自动拉起（含运行时权限请求与拒绝粘滞），`WEBCAM_KEYFRAME` 即时响应关键帧请求，`MICROPHONE_DISABLED`/`WEBCAM_DISABLED` 策略回执处理
+
+### 远程打印（v1.1.0 新增）
+- 远端应用打印到 PDF 打印机 → 服务器推送 `print_document` 信号 → 自动下载打印池 PDF（`GET /api/print/<name>`）→ **自动拉起 Android 系统打印界面**（PrintManager，可选实体打印机/云打印/另存 PDF）
+- 打印失败兑底自动存入系统下载目录
+
+### 文件管理器（v1.1.0 新增）
+- 远端文件浏览（`GET /api/files/<path>/` 目录列表，面包屑导航 + 上级目录）
+- 单文件下载 + **多选批量下载**（长按进入多选，存入系统 Downloads）
+- 多文件上传（系统选择器多选，上传到当前目录，>48MB 自动分片兼容 CF）
+
 ### 工具与设置
-- **多服务器管理**：增删改/重命名、默认服务器、连接测试（走与真实连接相同的探测管线）
+- **全屏沉浸模式**（v1.1.0）：一键隐藏系统栏与面板，滑动边缘可呼出
+- **远程截图**（v1.1.0）：`GET /api/screenshot` 直存系统下载目录
+- **多服务器管理**：增删改/重命名、默认服务器、连接测试（走与真实连接相同的探测管线）、**多选批量操作**（批量连接/批量测试/批量删除）
 - **剪贴板双向同步**：本地↔远端（小内容 `cw`/`clipboard,`，大内容 `cws/cwd/cwe` 分段）
 - **文件上传**：唤起系统文件选择器 → POST `/api/upload`（`X-Upload-Path` 头），>48MB 自动分片（兼容 Cloudflare 100MB 限制）
 - **设置页**：CRF 画质 / CBR 码率 / 帧率 / 码率控制模式 / 音频码率、手势自定义（双指轻点、长按动作、触摸模式、捏合缩放）、安全（清除全部已保存密码）、关于页（含最近崩溃日志查看）
@@ -63,10 +84,14 @@
 | `selkies/src/selkies/stream_server.py` | Basic Auth / Origin 校验 / 上传端点 |
 
 关键协议点：
-- 二进制帧首字节分类：`0x01` Opus 音频、`0x03` JPEG 条带、`0x04` 视频帧、`0x05` gzip 控制文本
+- 二进制帧首字节分类：`0x01` Opus 音频（下行）、`0x02` 麦克风 Opus（上行）、`0x03` JPEG 条带、`0x04` 视频帧、`0x05` gzip 控制文本、`0x06` 摄像头帧（上行 `[opcode][codec][flags][payload]`）
 - `0x04` 帧头 12 字节：`[类型, 编码|关键帧, u16 帧ID, u16 条带Y, u16 宽, u16 高, u16 参考帧ID]` + Annex-B 码流
-- 握手序列：`SETTINGS,{json}` → `cr` → 收到 `server_settings` 后 `r,WxH,primary` → `START_VIDEO` → `START_AUDIO`
+- 握手序列：`SETTINGS,{json}` → 收到 `server_settings` 后 `r,WxH,primary` → `START_VIDEO` → `START_AUDIO`
+- 打印链路：`{"type":"print_document"}` → `GET /api/print/<name>` 取 PDF → 系统打印界面
+- 文件浏览：`GET /api/files/<path>/` HTML 目录列表 → 解析条目；文件 GET 为 attachment 下载
+- 摄像头 flags：bit0 关键帧、bits1-2 顺时针 1/4 圈旋转、bit3 水平翻转（对齐 webcam.py）
 - 仅查看模式门禁在客户端两处生效（`InputController` + `ConnectionEngine.sendInput`）
+- 上行硬件门禁：viewer 角色/策略禁用时服务器回 `MICROPHONE_DISABLED`/`WEBCAM_DISABLED`，客户端停止并提示
 
 ---
 

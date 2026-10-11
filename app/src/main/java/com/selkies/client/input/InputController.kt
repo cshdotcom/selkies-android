@@ -102,6 +102,15 @@ class InputController(private val engine: ConnectionEngine) {
         onModifiersChanged?.invoke()
     }
 
+    /** 快捷键组合（预置/自定义）：显式修饰键列表 → 主键 → 修饰逆序释放（官方 chord 行为） */
+    fun tapChord(modifiers: List<Int>, key: Int) {
+        if (!allowed()) return
+        modifiers.forEach { engine.keyEvent(it, true) }
+        engine.keyEvent(key, true)
+        engine.keyEvent(key, false)
+        modifiers.reversed().forEach { engine.keyEvent(it, false) }
+    }
+
     private fun releaseModifiersAfterChord() {
         synchronized(heldModifiers) {
             if (heldModifiers.isNotEmpty()) {

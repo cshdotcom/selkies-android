@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 远程会话页：全屏黑底 + 流视图 + 状态浮层 + 控制面板 + 虚拟键盘 -->
+<!-- 远程会话页：全屏黑底 + 流视图 + 状态浮层 + 控制面板(两行) + IME捕获层 + 虚拟键盘 -->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,7 +26,7 @@
         android:visibility="gone"
         app:tint="@color/white" />
 
-    <!-- 顶部控制面板 -->
+    <!-- 顶部控制面板（两行：输入/媒体 + 硬件/全屏） -->
     <LinearLayout
         android:id="@+id/panel_top"
         android:layout_width="wrap_content"
@@ -34,89 +34,137 @@
         android:layout_gravity="top|end"
         android:layout_margin="6dp"
         android:background="@drawable/bg_scrim_round"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:padding="4dp">
 
-        <ImageButton
-            android:id="@+id/btn_idr"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_idr"
-            android:src="@drawable/ic_idr"
-            app:tint="@color/white" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btn_clipboard"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_clipboard_sync"
-            android:src="@drawable/ic_clipboard"
-            app:tint="@color/white" />
+            <ImageButton
+                android:id="@+id/btn_idr"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_idr"
+                android:src="@drawable/ic_idr"
+                app:tint="@color/white" />
 
-        <ImageButton
-            android:id="@+id/btn_upload"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_upload"
-            android:src="@drawable/ic_upload"
-            app:tint="@color/white" />
+            <ImageButton
+                android:id="@+id/btn_clipboard"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_clipboard_sync"
+                android:src="@drawable/ic_clipboard"
+                app:tint="@color/white" />
 
-        <ImageButton
-            android:id="@+id/btn_audio"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_audio"
-            android:src="@drawable/ic_audio_on"
-            app:tint="@color/white" />
+            <ImageButton
+                android:id="@+id/btn_keyboard"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_keyboard"
+                android:src="@drawable/ic_keyboard"
+                app:tint="@color/white" />
 
-        <ImageButton
-            android:id="@+id/btn_mouse_mode"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_mouse_mode"
-            android:src="@drawable/ic_mouse"
-            app:tint="@color/white" />
+            <ImageButton
+                android:id="@+id/btn_mouse_mode"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_mouse_mode"
+                android:src="@drawable/ic_mouse"
+                app:tint="@color/white" />
 
-        <ImageButton
-            android:id="@+id/btn_keyboard"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_keyboard"
-            android:src="@drawable/ic_keyboard"
-            app:tint="@color/white" />
+            <ImageButton
+                android:id="@+id/btn_audio"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_audio"
+                android:src="@drawable/ic_audio_on"
+                app:tint="@color/white" />
 
-        <ImageButton
-            android:id="@+id/btn_stats"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_stats"
-            android:src="@drawable/ic_stats"
-            app:tint="@color/white" />
+            <ImageButton
+                android:id="@+id/btn_hide_panel"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_hide"
+                android:src="@drawable/ic_hide"
+                app:tint="@color/white" />
+        </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/btn_hide_panel"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_hide"
-            android:src="@drawable/ic_hide"
-            app:tint="@color/white" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btn_disconnect"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/panel_disconnect"
-            android:src="@drawable/ic_disconnect"
-            app:tint="@color/status_err" />
+            <ImageButton
+                android:id="@+id/btn_files"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_files"
+                android:src="@drawable/ic_files"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_screenshot"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_screenshot"
+                android:src="@drawable/ic_screenshot"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_mic"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_mic"
+                android:src="@drawable/ic_mic"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_webcam"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_webcam"
+                android:src="@drawable/ic_webcam"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_fullscreen"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_fullscreen"
+                android:src="@drawable/ic_fullscreen"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_stats"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_stats"
+                android:src="@drawable/ic_stats"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_disconnect"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_disconnect"
+                android:src="@drawable/ic_disconnect"
+                app:tint="@color/status_err" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- 统计浮层 -->
@@ -266,18 +314,16 @@
         android:textSize="13sp"
         android:visibility="gone" />
 
+    <!-- IME 直通捕获层（透明 1px）：点键盘后直接弹输入法，打字实时 co,end -->
+    <com.selkies.client.input.ImeCaptureView
+        android:id="@+id/ime_capture"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom|start"
+        android:alpha="0.01" />
+
     <!-- 虚拟键盘（底部） -->
     <include
         android:id="@+id/virtual_keyboard_include"
         layout="@layout/view_virtual_keyboard" />
-
-    <!-- 上传目标路径输入对话框复用区 -->
-    <EditText
-        android:id="@+id/edit_upload_path"
-        android:layout_width="1dp"
-        android:layout_height="1dp"
-        android:alpha="0"
-        android:hint="@string/upload_dest_hint"
-        android:inputType="text"
-        android:visibility="gone" />
 </FrameLayout>

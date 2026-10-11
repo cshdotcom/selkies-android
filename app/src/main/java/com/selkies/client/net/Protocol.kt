@@ -37,6 +37,7 @@ object Protocol {
     const val BINARY_JPEG = 0x03
     const val BINARY_VIDEO = 0x04
     const val BINARY_GZIP_TEXT = 0x05
+    const val BINARY_WEBCAM = 0x06
 
     /** 音频帧第二字节的“静音门关闭”标记 */
     const val AUDIO_QUIET = 0x80

@@ -1,13 +1,14 @@
 package com.selkies.client.ui.session
 
+import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.hardware.input.InputManager
 import android.graphics.Rect
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.InputDevice
@@ -18,49 +19,55 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.selkies.client.R
 import com.selkies.client.data.ServerConfig
 import com.selkies.client.data.ServerRepository
 import com.selkies.client.data.SettingsStore
 import com.selkies.client.databinding.ActivitySessionBinding
 import com.selkies.client.input.GestureHandler
+import com.selkies.client.input.ImeCaptureView
 import com.selkies.client.input.InputController
 import com.selkies.client.input.Keysyms
+import com.selkies.client.input.ShortcutStore
 import com.selkies.client.media.AudioPlayer
+import com.selkies.client.media.MicUplink
 import com.selkies.client.media.VideoDecoder
+import com.selkies.client.media.WebcamUplink
 import com.selkies.client.net.ConnectionEngine
-import com.selkies.client.net.EndpointProber
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import com.selkies.client.net.FilesApi
+import com.selkies.client.ui.FilesActivity
+import com.selkies.client.ui.PrintHelper
+import com.selkies.client.ui.ShortcutsActivity
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
+import java.io.File
 import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.min
 
 /**
- * 远程会话页 —— 引擎 / 解码器 / 输入系统的装配现场。
+ * 远程会话页 —— 引擎 / 解码器 / 输入 / 硬件上行的装配现场。
  *
- * 生命周期与防闪退要点：
- *  - Activity 自行处理旋转等配置变更（manifest configChanges），
- *    全程只创建一次引擎与解码器 —— 旋转绝不重建会话；
- *  - Surface 销毁（切后台/熄屏）只解绑解码器，回前台自动重新绑定，
- *    并请求关键帧恢复画面；
- *  - onStart/onStop 控制 STOP_VIDEO/START_VIDEO（省流），onDestroy 全量清理；
- *  - NEED_AUTH 弹内嵌凭据表单；FAILED/重连有明确状态提示与手动重连按钮。
+ * v1.1.0 新增：
+ *  - IME 直通（ImeCaptureView）：点键盘直接弹输入法，实时 co,end，回车发键事件；
+ *  - 快捷键系统（预置+自定义）：底部快捷键栏 + 管理（ShortcutsActivity）；
+ *  - 有线键盘模式：检测到外接键盘自动切换（隐藏软键盘 + 键盘直通）；
+ *  - 远程硬件：麦克风（0x02 Opus）与摄像头（0x06 H264）上行，响应 CAPTURE_DEMAND；
+ *  - 远程打印：print_document 信号 → 自动拉起系统打印界面；
+ *  - 截图（/api/screenshot）、远端文件浏览器入口、全屏沉浸模式。
  */
 class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
 
     companion object {
         const val EXTRA_SERVER_ID = "server_id"
         private const val TAG = "SessionActivity"
-        private const val REQ_UPLOAD = 4271
-        private const val UPLOAD_CHUNK = 48L * 1024 * 1024 // 48MB/片（低于 CF 100MB 上限）
+        private const val REQ_PERM_MIC = 5001
+        private const val REQ_PERM_CAM = 5002
     }
 
     private lateinit var binding: ActivitySessionBinding
@@ -74,6 +81,9 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     private val audioPlayer = AudioPlayer()
     private lateinit var input: InputController
     private lateinit var gestures: GestureHandler
+    private lateinit var shortcutStore: ShortcutStore
+    private var micUplink: MicUplink? = null
+    private var webcamUplink: WebcamUplink? = null
 
     // 视图状态
     private var surfaceView: SurfaceView? = null
@@ -86,6 +96,18 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     private var keyboardVisible = false
     private var roleCapped = false
     private var sessionEverConnected = false
+    private var fullscreen = false
+
+    // 有线键盘模式（检测到外接键盘自动切换）
+    private var hwKeyboardMode = false
+    private var inputDeviceListener: InputManager.InputDeviceListener? = null
+
+    // 硬件权限拒绝后的"拒绝粘滞"（对齐官方 webcamDemandRefused 逻辑：拒绝过就不再自动请求）
+    private var micPermRefused = false
+    private var camPermRefused = false
+
+    // IME 直通层
+    private lateinit var imeCapture: ImeCaptureView
 
     // ------------------------------------------------------------------
     // 生命周期
@@ -114,6 +136,7 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         videoDecoder = VideoDecoder()
         input = InputController(engine)
         gestures = GestureHandler(engine, input, settings)
+        shortcutStore = ShortcutStore(this)
 
         input.viewOnly = cfg.viewOnly
         engine.mediaSink = CombinedSink()
@@ -131,7 +154,9 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         setupStreamView()
         setupPanel()
         setupKeyboard()
+        setupIme()
         setupAuthBox()
+        setupHardwareKeyboardDetection()
 
         engine.connect()
     }
@@ -157,6 +182,15 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
 
     override fun onDestroy() {
         super.onDestroy()
+        try {
+            inputDeviceListener?.let {
+                (getSystemService(Context.INPUT_SERVICE) as? InputManager)
+                    ?.unregisterInputDeviceListener(it)
+            }
+        } catch (_: Exception) {
+        }
+        micUplink?.stop(); micUplink = null
+        webcamUplink?.stop(); webcamUplink = null
         if (this::engine.isInitialized) {
             engine.mediaSink = null
             engine.shutdown()
@@ -351,7 +385,6 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         }
 
         binding.btnClipboard.setOnClickListener { showClipboardDialog() }
-        binding.btnUpload.setOnClickListener { pickUploadFile() }
 
         binding.btnAudio.setOnClickListener {
             audioOn = !audioOn
@@ -396,6 +429,23 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
             engine.connect()
         }
         binding.btnExit.setOnClickListener { finish() }
+
+        // ---- v1.1.0 新增按钮 ----
+        binding.btnFiles.setOnClickListener {
+            config?.let { c ->
+                startActivity(
+                    Intent(this, FilesActivity::class.java)
+                        .putExtra(FilesActivity.EXTRA_SERVER_ID, c.id)
+                )
+            }
+        }
+
+        binding.btnScreenshot.setOnClickListener { takeScreenshot() }
+
+        binding.btnMic.setOnClickListener { toggleMic() }
+        binding.btnWebcam.setOnClickListener { toggleWebcam() }
+
+        binding.btnFullscreen.setOnClickListener { toggleFullscreen() }
     }
 
     private fun showPanel() {
@@ -407,6 +457,166 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         binding.panelTop.visibility = View.GONE
         binding.btnShowPanel.visibility = View.VISIBLE
     }
+
+    // ------------------------------------------------------------------
+    // 全屏沉浸模式
+    // ------------------------------------------------------------------
+
+    private fun toggleFullscreen() {
+        fullscreen = !fullscreen
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        if (fullscreen) {
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            hidePanel()
+            toast(getString(R.string.fullscreen_on))
+        } else {
+            controller.show(WindowInsetsCompat.Type.systemBars())
+            showPanel()
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 截图（GET /api/screenshot → 系统下载目录）
+    // ------------------------------------------------------------------
+
+    private fun takeScreenshot() {
+        val cfg = config ?: return
+        toast(getString(R.string.screenshot_saving))
+        thread(name = "screenshot") {
+            try {
+                val tmp = File(cacheDir, "shot_${System.currentTimeMillis()}.png")
+                FilesApi.screenshot(cfg, tmp)
+                val saved = FilesApi.saveToDownloads(
+                    this,
+                    "selkies_${System.currentTimeMillis()}.png",
+                    "image/png"
+                ) { tmp.readBytes() }
+                tmp.delete()
+                runOnUiThread {
+                    toast(if (saved != null) getString(R.string.screenshot_saved)
+                    else getString(R.string.screenshot_failed))
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "screenshot: ${e.message}")
+                runOnUiThread { toast(getString(R.string.screenshot_failed)) }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 麦克风 / 摄像头上行（0x02 / 0x06）
+    // ------------------------------------------------------------------
+
+    private fun toggleMic() {
+        if (roleCapped || input.viewOnly) {
+            toast(getString(R.string.status_viewonly))
+            return
+        }
+        if (micUplink?.isRunning == true) {
+            micUplink?.stop()
+            binding.btnMic.isSelected = false
+            toast(getString(R.string.mic_off))
+            return
+        }
+        if (!hasPermission(Manifest.permission.RECORD_AUDIO)) {
+            if (micPermRefused) {
+                toast(getString(R.string.mic_perm_refused))
+                return
+            }
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_PERM_MIC)
+            return
+        }
+        startMic()
+    }
+
+    private fun startMic() {
+        if (micUplink?.isRunning == true) return
+        if (!MicUplink.encoderAvailable()) {
+            toast(getString(R.string.mic_no_encoder))
+            return
+        }
+        micUplink = MicUplink(engine) { err ->
+            runOnUiThread {
+                toast(getString(R.string.mic_error, err))
+                binding.btnMic.isSelected = false
+            }
+        }.also { up ->
+            if (up.start()) {
+                binding.btnMic.isSelected = true
+                toast(getString(R.string.mic_on))
+            } else {
+                binding.btnMic.isSelected = false
+            }
+        }
+    }
+
+    private fun toggleWebcam() {
+        if (roleCapped || input.viewOnly) {
+            toast(getString(R.string.status_viewonly))
+            return
+        }
+        if (webcamUplink?.isRunning == true) {
+            webcamUplink?.stop()
+            binding.btnWebcam.isSelected = false
+            toast(getString(R.string.webcam_off))
+            return
+        }
+        if (!hasPermission(Manifest.permission.CAMERA)) {
+            if (camPermRefused) {
+                toast(getString(R.string.webcam_perm_refused))
+                return
+            }
+            requestPermissions(arrayOf(Manifest.permission.CAMERA), REQ_PERM_CAM)
+            return
+        }
+        startWebcam()
+    }
+
+    private fun startWebcam() {
+        if (webcamUplink?.isRunning == true) return
+        webcamUplink = WebcamUplink(this, engine) { err ->
+            runOnUiThread {
+                toast(getString(R.string.webcam_error, err))
+                binding.btnWebcam.isSelected = false
+            }
+        }.also { up ->
+            if (up.start()) {
+                binding.btnWebcam.isSelected = true
+                toast(getString(R.string.webcam_on))
+            } else {
+                binding.btnWebcam.isSelected = false
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        val granted = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+        when (requestCode) {
+            REQ_PERM_MIC -> {
+                if (granted) startMic()
+                else {
+                    micPermRefused = true
+                    toast(getString(R.string.mic_perm_refused))
+                }
+            }
+            REQ_PERM_CAM -> {
+                if (granted) startWebcam()
+                else {
+                    camPermRefused = true
+                    toast(getString(R.string.webcam_perm_refused))
+                }
+            }
+        }
+    }
+
+    private fun hasPermission(p: String): Boolean =
+        checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
 
     // ------------------------------------------------------------------
     // 剪贴板双向同步
@@ -454,132 +664,46 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     }
 
     // ------------------------------------------------------------------
-    // 文件上传（POST /api/upload，X-Upload-Path 头）
+    // Basic Auth 内嵌表单
     // ------------------------------------------------------------------
 
-    private fun pickUploadFile() {
-        if (roleCapped || input.viewOnly) {
-            toast(getString(R.string.status_viewonly))
-            return
-        }
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }
-        try {
-            startActivityForResult(intent, REQ_UPLOAD)
-        } catch (e: Exception) {
-            Log.w(TAG, "no file picker: ${e.message}")
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQ_UPLOAD) return
-        if (resultCode != Activity.RESULT_OK) return
-        val uri = data?.data ?: return
-        uploadFile(uri)
-    }
-
-    /** 上传到远端 ~/Uploads/<文件名>；>48MB 自动分片（兼容 CF 100MB 上限） */
-    private fun uploadFile(uri: Uri) {
-        val cfg = config ?: return
-        toast(getString(R.string.panel_upload) + "…")
-        thread(name = "upload") {
-            try {
-                val name = queryDisplayName(uri) ?: "upload_${System.currentTimeMillis()}"
-                val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: throw IllegalStateException("cannot read file")
-
-                val destRel = "Uploads/$name"
-                val urlEncoded = java.net.URLEncoder.encode(destRel, "UTF-8")
-                    .replace("+", "%20")
-                val base = buildUploadBase(cfg)
-                val auth = if (!cfg.username.isNullOrEmpty()) {
-                    "Basic " + java.util.Base64.getEncoder()
-                        .encodeToString("${cfg.username}:${cfg.password ?: ""}".toByteArray())
-                } else null
-
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .writeTimeout(120, TimeUnit.SECONDS)
-                    .readTimeout(120, TimeUnit.SECONDS)
-                    .apply { if (cfg.trustAllCerts) EndpointProber.applyTrustAll(this) }
-                    .build()
-
-                val total = bytes.size.toLong()
-                val mediaType = "application/octet-stream".toMediaType()
-
-                if (total <= UPLOAD_CHUNK) {
-                    // 单次 POST（官方 plain 形态）
-                    val req = Request.Builder()
-                        .url("$base/api/upload")
-                        .header("Content-Type", "application/octet-stream")
-                        .header("X-Upload-Path", urlEncoded)
-                        .apply { if (auth != null) header("Authorization", auth) }
-                        .post(bytes.toRequestBody(mediaType))
-                        .build()
-                    client.newCall(req).execute().use { resp ->
-                        if (!resp.isSuccessful) {
-                            throw IllegalStateException(
-                                "HTTP ${resp.code}: ${resp.body?.string()?.take(120) ?: ""}"
-                            )
-                        }
-                    }
-                } else {
-                    // 分片（官方 chunked 形态）
-                    val uploadId = java.util.UUID.randomUUID().toString().substring(0, 16)
-                    var off = 0L
-                    while (off < total) {
-                        val end = minOf(off + UPLOAD_CHUNK, total)
-                        val slice = bytes.copyOfRange(off.toInt(), end.toInt())
-                        val isFinal = end >= total
-                        val req = Request.Builder()
-                            .url("$base/api/upload")
-                            .header("Content-Type", "application/octet-stream")
-                            .header("X-Upload-Path", urlEncoded)
-                            .header("X-Upload-Id", uploadId)
-                            .header("X-Upload-Offset", off.toString())
-                            .header("X-Upload-Total", total.toString())
-                            .header("X-Upload-Final", if (isFinal) "1" else "0")
-                            .apply { if (auth != null) header("Authorization", auth) }
-                            .post(slice.toRequestBody(mediaType))
-                            .build()
-                        client.newCall(req).execute().use { resp ->
-                            if (!resp.isSuccessful) throw IllegalStateException("HTTP ${resp.code} @ $off")
-                        }
-                        val pct = (end * 100 / total).toInt()
-                        runOnUiThread { toast(getString(R.string.uploading, pct, name)) }
-                        off = end
-                    }
-                }
-                runOnUiThread { toast(getString(R.string.upload_done, destRel)) }
-            } catch (e: Exception) {
-                Log.w(TAG, "upload failed: ${e.message}")
-                runOnUiThread { toast(getString(R.string.upload_failed, e.message ?: "?")) }
+    private fun setupAuthBox() {
+        binding.btnAuthOk.setOnClickListener {
+            val user = binding.editAuthUser.text.toString()
+            val pass = binding.editAuthPass.text.toString()
+            if (user.isEmpty()) {
+                binding.editAuthUser.error = getString(R.string.server_username)
+                return@setOnClickListener
             }
+            engine.provideCredentials(user, pass)
+            binding.authBox.visibility = View.GONE
+            showStatus(getString(R.string.status_connecting))
         }
-    }
-
-    private fun queryDisplayName(uri: Uri): String? = try {
-        contentResolver.query(uri, null, null, null, null)?.use { c ->
-            val idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-            if (idx >= 0 && c.moveToFirst()) c.getString(idx) else null
-        }
-    } catch (_: Exception) {
-        null
-    }
-
-    private fun buildUploadBase(cfg: ServerConfig): String = buildString {
-        append(if (cfg.https) "https://" else "http://")
-        append(cfg.host)
-        if (cfg.port != 80 && cfg.port != 443) append(":").append(cfg.port)
-        append(cfg.normalizedPath)
     }
 
     // ------------------------------------------------------------------
-    // 虚拟键盘
+    // IME 直通（核心新特性：直接唤起输入法，实时输入，回车=键事件）
+    // ------------------------------------------------------------------
+
+    private fun setupIme() {
+        imeCapture = binding.imeCapture
+        // 打字实时上屏：每次 IME 提交即 co,end（无需发送按钮）
+        imeCapture.onTextCommit = { text ->
+            input.commitText(text)
+        }
+        // IME 直发键（回车/退格等）→ keysym 键事件
+        imeCapture.onKey = { keyCode, action, _ ->
+            val keysym = Keysyms.fromAndroidKeyCode(keyCode, null)
+            if (keysym != null) {
+                input.key(keysym, action == KeyEvent.ACTION_DOWN)
+                true
+            } else false
+        }
+        imeCapture.onImeOpened = { /* 状态跟踪（键盘可见性由 IMM 管理） */ }
+    }
+
+    // ------------------------------------------------------------------
+    // 虚拟键盘（快捷键栏 + 扩展键位 + IME 直通按钮）
     // ------------------------------------------------------------------
 
     private fun setupKeyboard() {
@@ -622,62 +746,129 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
             findViewById<Button>(id).setOnClickListener { input.tapKey(keysym) }
         }
 
-        // 文字输入行：IME 输入 → 回车/发送 → co,end
-        val sendAction = {
-            val text = binding.virtualKeyboardInclude.kbTextInput.text?.toString() ?: ""
-            if (text.isNotEmpty()) {
-                input.commitText(text)
-                binding.virtualKeyboardInclude.kbTextInput.setText("")
-            }
+        // IME 直通按钮：点一下直接弹系统输入法（不需要任何发送操作）
+        findViewById<Button>(R.id.kb_ime).setOnClickListener { showImeDirect() }
+
+        // 快捷键管理入口
+        findViewById<Button>(R.id.kb_manage_shortcuts).setOnClickListener {
+            startActivity(Intent(this, ShortcutsActivity::class.java))
         }
-        binding.virtualKeyboardInclude.kbTextInput.setOnEditorActionListener { _, actionId, event ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEND ||
-                (event?.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_ENTER)
-            ) {
-                sendAction()
-                true
-            } else false
-        }
-        binding.virtualKeyboardInclude.kbTextSend.setOnClickListener { sendAction() }
     }
 
-    private fun showKeyboard() {
+    /** onResume 时刷新快捷键栏（用户可能在管理页增删） */
+    override fun onResume() {
+        super.onResume()
+        if (this::shortcutStore.isInitialized) rebuildShortcutRow()
+    }
+
+    /** 快捷键栏：预置 + 自定义动态填充（点击即发送组合键） */
+    private fun rebuildShortcutRow() {
+        val row = findViewById<LinearLayout>(R.id.kb_shortcut_row) ?: return
+        // 保留"管理"按钮，其余重建
+        val manageBtn = findViewById<Button>(R.id.kb_manage_shortcuts)
+        row.removeAllViews()
+        if (manageBtn != null) row.addView(manageBtn)
+        try {
+            shortcutStore.all().forEach { sc ->
+                val btn = Button(this, null, 0, R.style.ShortcutBtn)
+                btn.text = sc.name
+                btn.setOnClickListener { input.tapChord(sc.modifiers, sc.key) }
+                row.addView(btn)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "shortcut row: ${e.message}")
+        }
+    }
+
+    /** 直接唤起系统输入法（IME 直通层聚焦） */
+    private fun showImeDirect() {
         keyboardVisible = true
         binding.virtualKeyboardInclude.root.visibility = View.VISIBLE
-        binding.virtualKeyboardInclude.kbTextInput.requestFocus()
-        val imm =
-            getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        imm.showSoftInput(binding.virtualKeyboardInclude.kbTextInput, 0)
+        imeCapture.requestFocus()
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.showSoftInput(imeCapture, 0)
     }
+
+    private fun showKeyboard() = showImeDirect()
 
     private fun hideKeyboard() {
         keyboardVisible = false
         binding.virtualKeyboardInclude.root.visibility = View.GONE
         if (this::input.isInitialized) input.releaseModifiers()
         try {
-            val imm =
-                getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-            imm.hideSoftInputFromWindow(binding.virtualKeyboardInclude.kbTextInput.windowToken, 0)
+            if (this::imeCapture.isInitialized) {
+                val imm =
+                    getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(imeCapture.windowToken, 0)
+                imeCapture.clearFocus()
+            }
         } catch (_: Exception) {
         }
     }
 
     // ------------------------------------------------------------------
-    // Basic Auth 内嵌表单
+    // 有线键盘模式（检测到外接键盘 → 自动切换：隐藏软键盘 + 物理键直通）
     // ------------------------------------------------------------------
 
-    private fun setupAuthBox() {
-        binding.btnAuthOk.setOnClickListener {
-            val user = binding.editAuthUser.text.toString()
-            val pass = binding.editAuthPass.text.toString()
-            if (user.isEmpty()) {
-                binding.editAuthUser.error = getString(R.string.server_username)
-                return@setOnClickListener
-            }
-            engine.provideCredentials(user, pass)
-            binding.authBox.visibility = View.GONE
-            showStatus(getString(R.string.status_connecting))
+    private fun setupHardwareKeyboardDetection() {
+        val im = getSystemService(Context.INPUT_SERVICE) as? InputManager ?: return
+        // 初始状态（配置级：hardKeyboardHidden）
+        if (resources.configuration.hardKeyboardHidden ==
+            android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO
+        ) {
+            enterHwKeyboardMode(silent = true)
         }
+        inputDeviceListener = object : InputManager.InputDeviceListener {
+            override fun onInputDeviceAdded(deviceId: Int) {
+                handleDevice(deviceId)
+            }
+
+            override fun onInputDeviceRemoved(deviceId: Int) {
+                // 设备移除后重新评估
+                if (!anyExternalKeyboard()) exitHwKeyboardMode()
+            }
+
+            override fun onInputDeviceChanged(deviceId: Int) {
+                handleDevice(deviceId)
+            }
+
+            private fun handleDevice(deviceId: Int) {
+                try {
+                    val dev = InputDevice.getDevice(deviceId) ?: return
+                    val isKb = (dev.sources and InputDevice.SOURCE_KEYBOARD) != 0 &&
+                            dev.isExternal && !dev.isVirtual
+                    if (isKb) enterHwKeyboardMode()
+                } catch (_: Exception) {
+                }
+            }
+        }
+        im.registerInputDeviceListener(inputDeviceListener, null)
+    }
+
+    private fun anyExternalKeyboard(): Boolean = try {
+        (getSystemService(Context.INPUT_SERVICE) as? InputManager)?.inputDeviceIds
+            ?.any { id ->
+                InputDevice.getDevice(id)?.let { d ->
+                    (d.sources and InputDevice.SOURCE_KEYBOARD) != 0 &&
+                            d.isExternal && !d.isVirtual
+                } == true
+            } == true
+    } catch (_: Exception) {
+        hwKeyboardMode
+    }
+
+    private fun enterHwKeyboardMode(silent: Boolean = false) {
+        if (hwKeyboardMode) return
+        hwKeyboardMode = true
+        // 物理键盘接管输入：收起软键盘与虚拟键盘（键事件已由 Activity 直通远端）
+        hideKeyboard()
+        if (!silent) toast(getString(R.string.hw_keyboard_on))
+    }
+
+    private fun exitHwKeyboardMode() {
+        if (!hwKeyboardMode) return
+        hwKeyboardMode = false
+        toast(getString(R.string.hw_keyboard_off))
     }
 
     // ------------------------------------------------------------------
@@ -724,7 +915,30 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         }
     }
 
-    override fun onServerSettings(settings: JSONObject) { /* 能力提示，暂不消费 */ }
+    override fun onServerSettings(settings: JSONObject) {
+        // 能力提示：麦克风/摄像头上行被策略锁死时置灰
+        try {
+            val micAllowed = when (val v = settings.opt("microphone_enabled")) {
+                is Boolean -> v
+                is org.json.JSONArray -> v.optBoolean(0, true)
+                else -> true
+            }
+            val camAllowed = when (val v = settings.opt("webcam_enabled")) {
+                is Boolean -> v
+                is org.json.JSONArray -> v.optBoolean(0, true)
+                else -> true
+            }
+            if (!micAllowed) {
+                binding.btnMic.isEnabled = false
+                binding.btnMic.alpha = 0.4f
+            }
+            if (!camAllowed) {
+                binding.btnWebcam.isEnabled = false
+                binding.btnWebcam.alpha = 0.4f
+            }
+        } catch (_: Exception) {
+        }
+    }
 
     override fun onStreamResolution(width: Int, height: Int) {
         if (width <= 0 || height <= 0) return
@@ -785,6 +999,56 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         gestures.fingerScrollAvailable = fingerScroll
     }
 
+    override fun onPrintDocument(name: String, sizeBytes: Long) {
+        // 远端打印信号 → 下载 PDF → 自动打开系统打印界面
+        val cfg = config ?: return
+        toast(getString(R.string.print_received, name))
+        PrintHelper.handle(this, cfg, name, sizeBytes)
+    }
+
+    override fun onWebcamKeyframeRequest() {
+        webcamUplink?.requestKeyframe()
+    }
+
+    override fun onCaptureDemand(subject: String, on: Boolean) {
+        when (subject) {
+            "webcam" -> if (on) {
+                if (hasPermission(Manifest.permission.CAMERA) && !camPermRefused) startWebcam()
+                else if (!camPermRefused)
+                    requestPermissions(arrayOf(Manifest.permission.CAMERA), REQ_PERM_CAM)
+            } else {
+                webcamUplink?.stop()
+                binding.btnWebcam.isSelected = false
+            }
+            "microphone" -> if (on) {
+                if (hasPermission(Manifest.permission.RECORD_AUDIO) && !micPermRefused) startMic()
+                else if (!micPermRefused)
+                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_PERM_MIC)
+            } else {
+                micUplink?.stop()
+                binding.btnMic.isSelected = false
+            }
+        }
+    }
+
+    override fun onMicrophoneDisabled() {
+        micUplink?.stop()
+        binding.btnMic.isSelected = false
+        toast(getString(R.string.mic_disabled_remote))
+    }
+
+    override fun onWebcamDisabled() {
+        webcamUplink?.stop()
+        binding.btnWebcam.isSelected = false
+        toast(getString(R.string.webcam_disabled_remote))
+    }
+
+    override fun onSystemCommand(action: String, detail: String?) {
+        if (action == "command_error") {
+            toast(getString(R.string.command_error) + (detail?.let { ": $it" } ?: ""))
+        }
+    }
+
     override fun onStats(stats: ConnectionEngine.Stats) {
         if (binding.txtStats.visibility == View.VISIBLE) {
             binding.txtStats.text = buildString {
@@ -797,7 +1061,7 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     }
 
     // ------------------------------------------------------------------
-    // 硬件键盘 & 游戏手柄
+    // 硬件键盘 & 游戏手柄（物理键直通远端；手柄 → js 协议）
     // ------------------------------------------------------------------
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
