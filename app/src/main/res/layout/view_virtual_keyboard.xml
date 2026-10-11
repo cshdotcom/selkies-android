@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 虚拟键盘（底部抽屉）：修饰键行 + 功能键行 + 方向/控制键行 + 文字输入行 -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/virtual_keyboard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="#EE14141A"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="6dp"
+    android:visibility="gone">
+
+    <!-- 修饰键行 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/kb_ctrl" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_mod_ctrl" />
+
+        <Button
+            android:id="@+id/kb_alt" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_mod_alt" />
+
+        <Button
+            android:id="@+id/kb_shift" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_mod_shift" />
+
+        <Button
+            android:id="@+id/kb_super" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_mod_super" />
+    </LinearLayout>
+
+    <!-- F 键行（两段） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="3dp"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/kb_f1" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F1" />
+        <Button android:id="@+id/kb_f2" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F2" />
+        <Button android:id="@+id/kb_f3" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F3" />
+        <Button android:id="@+id/kb_f4" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F4" />
+        <Button android:id="@+id/kb_f5" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F5" />
+        <Button android:id="@+id/kb_f6" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F6" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="3dp"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/kb_f7" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F7" />
+        <Button android:id="@+id/kb_f8" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F8" />
+        <Button android:id="@+id/kb_f9" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F9" />
+        <Button android:id="@+id/kb_f10" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F10" />
+        <Button android:id="@+id/kb_f11" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F11" />
+        <Button android:id="@+id/kb_f12" style="@style/KbKey.Small"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="F12" />
+    </LinearLayout>
+
+    <!-- 控制键行 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="3dp"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/kb_esc" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_esc" />
+        <Button android:id="@+id/kb_tab" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_tab" />
+        <Button android:id="@+id/kb_home" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_home" />
+        <Button android:id="@+id/kb_end" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_end" />
+        <Button android:id="@+id/kb_pgup" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_pgup" />
+        <Button android:id="@+id/kb_pgdn" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_pgdn" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="3dp"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/kb_del" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_del" />
+        <Button android:id="@+id/kb_up" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_up" />
+        <Button android:id="@+id/kb_down" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_down" />
+        <Button android:id="@+id/kb_left" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_left" />
+        <Button android:id="@+id/kb_right" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_right" />
+        <Button android:id="@+id/kb_backspace" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_backspace" />
+        <Button android:id="@+id/kb_enter" style="@style/KbKey"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/kb_enter" />
+    </LinearLayout>
+
+    <!-- 文字输入行（唤起输入法，提交走 co,end） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/kb_text_input"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_kb_key"
+            android:hint="@string/kb_type_here"
+            android:imeOptions="actionSend"
+            android:inputType="text"
+            android:paddingHorizontal="12dp"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textColorHint="#66FFFFFF"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/kb_text_send" style="@style/KbKey"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="6dp"
+            android:minWidth="72dp"
+            android:text="@string/kb_send" />
+    </LinearLayout>
+</LinearLayout>

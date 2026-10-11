@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Selkies Remote Desktop</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="confirm">OK</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="retry">Retry</string>
+    <string name="connect">Connect</string>
+    <string name="test_connection">Test connection</string>
+    <string name="settings_title">Settings</string>
+    <string name="about_title">About</string>
+
+    <string name="server_list_title">My Servers</string>
+    <string name="server_list_empty">No servers yet\nTap + to add one</string>
+    <string name="add_server">Add server</string>
+    <string name="default_server">Default</string>
+    <string name="default_server_set">Default server, tap to quick-connect</string>
+    <string name="duplicate_name">Name already exists</string>
+
+    <string name="server_name">Name</string>
+    <string name="server_address">Address</string>
+    <string name="server_address_hint">e.g. 192.168.1.100 or example.com</string>
+    <string name="server_port">Port</string>
+    <string name="server_path">Subfolder (optional)</string>
+    <string name="server_path_hint">e.g. /selkies, empty for root</string>
+    <string name="server_https">Use HTTPS (WSS)</string>
+    <string name="server_username">Username</string>
+    <string name="server_password">Password</string>
+    <string name="server_save_credentials">Save credentials (stored in plain text on this device)</string>
+    <string name="server_permission_mode">Permission mode</string>
+    <string name="mode_control">Control (full keyboard &amp; mouse)</string>
+    <string name="mode_viewonly">View only (no input sent)</string>
+    <string name="invalid_address">Enter a valid server address</string>
+    <string name="invalid_port">Port must be 1–65535</string>
+    <string name="delete_server_confirm">Delete server \u0022%s\u0022?</string>
+    <string name="test_in_progress">Testing connection…</string>
+    <string name="test_ok">Connected ✓ RTT %d ms</string>
+    <string name="test_ok_no_rtt">Connected ✓</string>
+    <string name="test_failed">Connection failed: %s</string>
+    <string name="auth_required">Authentication required</string>
+    <string name="auth_hint">The server requires Basic Auth. Enter your credentials.</string>
+    <string name="server_endpoints">Will try: /api/websockets → /api/ws</string>
+
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_probing">Probing server…</string>
+    <string name="status_authenticating">Waiting for credentials…</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_reconnecting">Disconnected, reconnecting… (attempt %d)</string>
+    <string name="status_waiting_video">Waiting for video…</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_viewonly">View only</string>
+    <string name="error_connect_failed">Connection failed</string>
+    <string name="error_auth_failed">Authentication failed: wrong username or password</string>
+    <string name="error_server_killed">Server closed the connection: %s</string>
+    <string name="error_network">Network error: %s</string>
+    <string name="error_timeout">Connection timed out</string>
+    <string name="reconnect_now">Reconnect now</string>
+    <string name="exit_session">Exit session</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="video_started_badquality">Artifacts? Tap the IDR button to request a keyframe</string>
+
+    <string name="panel_keyboard">Keyboard</string>
+    <string name="panel_text_input">Text input</string>
+    <string name="panel_idr">IDR keyframe</string>
+    <string name="panel_clipboard_sync">Sync clipboard</string>
+    <string name="panel_clipboard_sent">Clipboard sent to remote</string>
+    <string name="panel_clipboard_got">Clipboard fetched from remote</string>
+    <string name="panel_upload">Upload file</string>
+    <string name="panel_mouse_mode">Mouse mode</string>
+    <string name="panel_disconnect">Disconnect</string>
+    <string name="panel_hide">Hide panel</string>
+    <string name="panel_show">Show panel</string>
+    <string name="panel_stats">Stats</string>
+    <string name="panel_audio">Audio</string>
+    <string name="audio_on">Audio: on</string>
+    <string name="audio_off">Audio: off</string>
+    <string name="audio_unavailable">Opus hardware decoding unavailable on this device, audio disabled</string>
+    <string name="upload_dest_hint">Remote destination path (default ~/Uploads)</string>
+    <string name="uploading">Uploading %1$d%%: %2$s</string>
+    <string name="upload_done">Upload finished: %s</string>
+    <string name="upload_failed">Upload failed: %s</string>
+    <string name="upload_empty">No file selected</string>
+    <string name="mouse_mode_touch">Touchpad</string>
+    <string name="mouse_mode_direct">Direct touch</string>
+    <string name="kb_mod_ctrl">Ctrl</string>
+    <string name="kb_mod_alt">Alt</string>
+    <string name="kb_mod_shift">Shift</string>
+    <string name="kb_mod_super">Super</string>
+    <string name="kb_esc">Esc</string>
+    <string name="kb_tab">Tab</string>
+    <string name="kb_backspace">⌫</string>
+    <string name="kb_enter">↵</string>
+    <string name="kb_del">Del</string>
+    <string name="kb_home">Home</string>
+    <string name="kb_end">End</string>
+    <string name="kb_pgup">PgUp</string>
+    <string name="kb_pgdn">PgDn</string>
+    <string name="kb_up">↑</string>
+    <string name="kb_down">↓</string>
+    <string name="kb_left">←</string>
+    <string name="kb_right">→</string>
+    <string name="kb_fkeys">F1–F12</string>
+    <string name="kb_type_here">Type text here, Enter to send</string>
+    <string name="kb_send">Send</string>
+    <string name="stats_fps">FPS</string>
+    <string name="stats_bitrate">Bitrate</string>
+    <string name="stats_rtt">RTT</string>
+    <string name="stats_res">Resolution</string>
+    <string name="stats_codec">Codec</string>
+
+    <string name="pref_quality">Quality &amp; performance</string>
+    <string name="pref_video_crf">Video CRF quality</string>
+    <string name="pref_video_crf_desc">Lower is better (20–28 recommended), applies on reconnect</string>
+    <string name="pref_video_bitrate">Video bitrate (kbps)</string>
+    <string name="pref_video_bitrate_desc">Target bitrate in CBR mode, applies on reconnect</string>
+    <string name="pref_framerate">Framerate</string>
+    <string name="pref_framerate_desc">Applies on reconnect</string>
+    <string name="pref_rate_control">Rate control mode</string>
+    <string name="pref_audio_bitrate">Audio bitrate (bps)</string>
+    <string name="pref_auto_audio">Start audio automatically</string>
+    <string name="pref_gestures">Gestures &amp; input</string>
+    <string name="pref_two_finger_tap">Two-finger tap</string>
+    <string name="pref_long_press">Long press</string>
+    <string name="pref_sticky_modifiers">Sticky modifiers</string>
+    <string name="pref_input_touch_mode">Default touch mode</string>
+    <string name="pref_security">Security</string>
+    <string name="pref_clear_passwords">Clear all saved passwords</string>
+    <string name="pref_clear_passwords_desc">Remove credentials stored in all server configs</string>
+    <string name="pref_cleared">Cleared</string>
+    <string name="pref_about_app">Selkies native Android client v%1$s\nSelkies v2 WebSocket streaming protocol\nNative MediaCodec hardware decoding, no WebView\n\nhttps://github.com/cshdotcom/selkies-android</string>
+
+    <string-array name="framerate_entries">
+        <item>30 fps</item>
+        <item>60 fps</item>
+        <item>15 fps (save data)</item>
+    </string-array>
+    <string-array name="framerate_values">
+        <item>30</item>
+        <item>60</item>
+        <item>15</item>
+    </string-array>
+    <string-array name="rate_control_entries">
+        <item>CBR constant bitrate</item>
+        <item>CRF constant quality</item>
+    </string-array>
+    <string-array name="rate_control_values">
+        <item>cbr</item>
+        <item>crf</item>
+    </string-array>
+    <string-array name="two_finger_tap_entries">
+        <item>Right click</item>
+        <item>Middle click</item>
+    </string-array>
+    <string-array name="two_finger_tap_values">
+        <item>right</item>
+        <item>middle</item>
+    </string-array>
+    <string-array name="long_press_entries">
+        <item>Right click</item>
+        <item>Middle click</item>
+        <item>Left-button drag</item>
+    </string-array>
+    <string-array name="long_press_values">
+        <item>right</item>
+        <item>middle</item>
+        <item>drag</item>
+    </string-array>
+    <string-array name="touch_mode_entries">
+        <item>Touchpad (relative)</item>
+        <item>Direct touch (absolute)</item>
+    </string-array>
+    <string-array name="touch_mode_values">
+        <item>trackpad</item>
+        <item>direct</item>
+    </string-array>
+</resources>

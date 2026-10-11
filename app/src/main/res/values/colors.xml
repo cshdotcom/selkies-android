@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="selkies_blue">#4FC3F7</color>
+    <color name="selkies_blue_dark">#1A5C7A</color>
+    <color name="selkies_teal">#64FFDA</color>
+    <color name="surface_dark">#141419</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="scrim_40">#66000000</color>
+    <color name="scrim_70">#B3000000</color>
+    <color name="status_ok">#4CAF50</color>
+    <color name="status_warn">#FFB300</color>
+    <color name="status_err">#FF5252</color>
+    <color name="kb_key_bg">#2A2A32</color>
+    <color name="kb_key_bg_pressed">#4A4A55</color>
+    <color name="kb_mod_active">#4FC3F7</color>
+</resources>

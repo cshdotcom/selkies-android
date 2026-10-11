@@ -1,0 +1,16 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# IDE
+.idea/
+*.iml
+local.properties
+
+# 签名（密钥不入库，Release 发行单独提供）
+keystore/
+
+# 系统
+.DS_Store
+*.log
