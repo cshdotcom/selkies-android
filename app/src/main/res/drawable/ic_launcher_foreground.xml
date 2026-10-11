@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自适应启动图标：前景（显示器 + 连接符号） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 显示器外框 -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M30,34 L78,34 A4,4 0 0 1 82,38 L82,64 A4,4 0 0 1 78,68 L30,68 A4,4 0 0 1 26,64 L26,38 A4,4 0 0 1 30,34 Z" />
+    <!-- 屏幕内部（深色） -->
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M32,38 L76,38 A2,2 0 0 1 78,40 L78,62 A2,2 0 0 1 76,64 L32,64 A2,2 0 0 1 30,62 L30,40 A2,2 0 0 1 32,38 Z" />
+    <!-- 支架 -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M48,68 L60,68 L60,74 L48,74 Z" />
+    <!-- 底座 -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M42,74 L66,74 A2,2 0 0 1 68,76 L68,78 L40,78 L40,76 A2,2 0 0 1 42,74 Z" />
+    <!-- 信号波纹 -->
+    <path
+        android:fillColor="#64FFDA"
+        android:pathData="M54,44 m-3,0 a3,3 0 1 1 6,0 a3,3 0 1 1 -6,0" />
+    <path
+        android:strokeColor="#64FFDA"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M46,52 A11,11 0 0 1 62,52" />
+    <path
+        android:strokeColor="#4FC3F7"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M42,56 A17,17 0 0 1 66,56" />
+</vector>

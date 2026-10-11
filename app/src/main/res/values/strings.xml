@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Selkies 远程桌面</string>
+
+    <!-- 通用 -->
+    <string name="cancel">取消</string>
+    <string name="confirm">确定</string>
+    <string name="save">保存</string>
+    <string name="delete">删除</string>
+    <string name="edit">编辑</string>
+    <string name="close">关闭</string>
+    <string name="retry">重试</string>
+    <string name="connect">连接</string>
+    <string name="test_connection">测试连接</string>
+    <string name="settings_title">设置</string>
+    <string name="about_title">关于</string>
+
+    <!-- 服务器列表 -->
+    <string name="server_list_title">我的服务器</string>
+    <string name="server_list_empty">还没有服务器\n点击右下角 + 添加</string>
+    <string name="add_server">添加服务器</string>
+    <string name="default_server">默认服务器</string>
+    <string name="default_server_set">已设为默认，点击快速连接</string>
+    <string name="duplicate_name">名称已存在</string>
+
+    <!-- 服务器编辑 -->
+    <string name="server_name">名称</string>
+    <string name="server_address">地址</string>
+    <string name="server_address_hint">例如 192.168.1.100 或 example.com</string>
+    <string name="server_port">端口</string>
+    <string name="server_path">子目录（可选）</string>
+    <string name="server_path_hint">如 /selkies，留空为根路径</string>
+    <string name="server_https">使用 HTTPS (WSS)</string>
+    <string name="server_username">用户名</string>
+    <string name="server_password">密码</string>
+    <string name="server_save_credentials">保存账号密码（明文存储于本机）</string>
+    <string name="server_permission_mode">权限模式</string>
+    <string name="mode_control">控制模式（键鼠全控）</string>
+    <string name="mode_viewonly">仅查看模式（只收画面）</string>
+    <string name="invalid_address">请输入有效的服务器地址</string>
+    <string name="invalid_port">端口范围 1–65535</string>
+    <string name="delete_server_confirm">确定删除服务器「%s」？</string>
+    <string name="test_in_progress">正在测试连接…</string>
+    <string name="test_ok">连接成功 ✓ 延时 %d ms</string>
+    <string name="test_ok_no_rtt">连接成功 ✓</string>
+    <string name="test_failed">连接失败：%s</string>
+    <string name="auth_required">需要身份验证</string>
+    <string name="auth_hint">服务器开启了 Basic Auth，请输入账号密码</string>
+    <string name="server_endpoints">将依次尝试: /api/websockets → /api/ws</string>
+
+    <!-- 会话界面 -->
+    <string name="status_connecting">正在连接…</string>
+    <string name="status_probing">正在探测服务器…</string>
+    <string name="status_authenticating">等待身份验证…</string>
+    <string name="status_connected">已连接</string>
+    <string name="status_reconnecting">连接断开，正在重连…（第 %d 次）</string>
+    <string name="status_waiting_video">等待画面…</string>
+    <string name="status_disconnected">已断开</string>
+    <string name="status_viewonly">仅查看</string>
+    <string name="error_connect_failed">连接失败</string>
+    <string name="error_auth_failed">身份验证失败：账号或密码错误</string>
+    <string name="error_server_killed">服务器断开连接：%s</string>
+    <string name="error_network">网络错误：%s</string>
+    <string name="error_timeout">连接超时</string>
+    <string name="reconnect_now">立即重连</string>
+    <string name="exit_session">退出会话</string>
+    <string name="dismiss">知道了</string>
+    <string name="video_started_badquality">画面花屏？点击 IDR 按钮请求关键帧</string>
+
+    <!-- 控制面板 -->
+    <string name="panel_keyboard">键盘</string>
+    <string name="panel_text_input">文字输入</string>
+    <string name="panel_idr">IDR 关键帧</string>
+    <string name="panel_clipboard_sync">同步剪贴板</string>
+    <string name="panel_clipboard_sent">剪贴板已发送到远程</string>
+    <string name="panel_clipboard_got">已从远程获取剪贴板</string>
+    <string name="panel_upload">上传文件</string>
+    <string name="panel_mouse_mode">鼠标模式</string>
+    <string name="panel_disconnect">断开连接</string>
+    <string name="panel_hide">隐藏面板</string>
+    <string name="panel_show">显示面板</string>
+    <string name="panel_stats">统计</string>
+    <string name="panel_audio">声音</string>
+    <string name="audio_on">声音：开</string>
+    <string name="audio_off">声音：关</string>
+    <string name="audio_unavailable">此设备不支持 Opus 硬解码，音频已停用</string>
+    <string name="upload_dest_hint">远程保存路径（默认 ~/Uploads）</string>
+    <string name="uploading">上传中 %1$d%%：%2$s</string>
+    <string name="upload_done">上传完成：%s</string>
+    <string name="upload_failed">上传失败：%s</string>
+    <string name="upload_empty">未选择文件</string>
+    <string name="mouse_mode_touch">触摸板</string>
+    <string name="mouse_mode_direct">直接触摸</string>
+    <string name="kb_mod_ctrl">Ctrl</string>
+    <string name="kb_mod_alt">Alt</string>
+    <string name="kb_mod_shift">Shift</string>
+    <string name="kb_mod_super">Super</string>
+    <string name="kb_esc">Esc</string>
+    <string name="kb_tab">Tab</string>
+    <string name="kb_backspace">⌫</string>
+    <string name="kb_enter">↵</string>
+    <string name="kb_del">Del</string>
+    <string name="kb_home">Home</string>
+    <string name="kb_end">End</string>
+    <string name="kb_pgup">PgUp</string>
+    <string name="kb_pgdn">PgDn</string>
+    <string name="kb_up">↑</string>
+    <string name="kb_down">↓</string>
+    <string name="kb_left">←</string>
+    <string name="kb_right">→</string>
+    <string name="kb_fkeys">F1–F12</string>
+    <string name="kb_type_here">在此输入文字，回车发送</string>
+    <string name="kb_send">发送</string>
+    <string name="kb_ime_hint">⌨ 输入文字（直接唤起输入法，实时上屏，回车=Enter）</string>
+    <string name="stats_fps">帧率</string>
+    <string name="stats_bitrate">码率</string>
+    <string name="stats_rtt">往返延时</string>
+    <string name="stats_res">分辨率</string>
+    <string name="stats_codec">编码</string>
+
+    <!-- v1.1.0 新增：面板按钮 -->
+    <string name="panel_files">文件管理</string>
+    <string name="panel_screenshot">截图</string>
+    <string name="panel_mic">麦克风</string>
+    <string name="panel_webcam">摄像头</string>
+    <string name="panel_fullscreen">全屏</string>
+    <string name="fullscreen_on">已进入全屏（点右上角把手退出）</string>
+
+    <!-- v1.2.0 新增：面板第三行 -->
+    <string name="panel_apps">远程应用</string>
+    <string name="panel_quality">画质</string>
+    <string name="panel_command">远程命令</string>
+    <string name="panel_diag">连接诊断</string>
+    <string name="diag_copy">复制诊断日志</string>
+    <string name="diag_share">分享</string>
+    <string name="diag_copied">诊断日志已复制到剪贴板</string>
+
+    <!-- 剪贴板（v1.2.0 双向同步 + 设置） -->
+    <string name="clip_mode_both">双向同步</string>
+    <string name="clip_mode_recv">仅接收（远端→本机）</string>
+    <string name="clip_mode_send">仅发送（本机→远端）</string>
+    <string name="clip_mode_off">关闭自动同步</string>
+    <string name="clip_current_mode">当前：%s（本机与远端复制的内容自动互通）</string>
+    <string name="clip_action_pull">从远端拉取剪贴板</string>
+    <string name="clip_action_push">推送本机剪贴板到远端</string>
+    <string name="clip_action_edit_send">编辑文本发送…</string>
+    <string name="clip_action_settings">剪贴板同步设置…</string>
+    <string name="clip_mode_set">剪贴板模式：%s</string>
+    <string name="clip_pulling">正在拉取远端剪贴板…</string>
+    <string name="clip_local_empty">本机剪贴板为空</string>
+    <string name="clip_edit_hint">输入要发送到远端的文本</string>
+    <string name="clip_image_saved">远端图片剪贴板已保存：%s</string>
+    <string name="clip_image_save_failed">图片剪贴板保存失败</string>
+
+    <!-- 远程应用启动器 -->
+    <string name="apps_title">远程应用</string>
+    <string name="apps_refresh">刷新</string>
+    <string name="apps_search_hint">搜索应用…</string>
+    <string name="apps_loading">正在加载应用目录…</string>
+    <string name="apps_empty">没有匹配的应用</string>
+    <string name="apps_load_failed">应用目录加载失败：%s</string>
+    <string name="apps_source_local">目录来源：服务器本地仓库</string>
+    <string name="apps_source_remote">目录来源：proot-apps 在线仓库</string>
+    <string name="apps_launch">启动</string>
+    <string name="apps_install">安装</string>
+    <string name="apps_update">更新</string>
+    <string name="apps_remove">卸载</string>
+    <string name="apps_more_actions">更多操作</string>
+    <string name="apps_cmd_sent">已发送：%s</string>
+    <string name="apps_no_session">会话未连接，无法执行</string>
+    <string name="apps_not_enabled">服务器未启用应用面板（ui_sidebar_show_apps）</string>
+    <string name="apps_installed_updated">远程应用列表已更新（共 %d 个）</string>
+
+    <!-- 画质热切换 -->
+    <string name="quality_presets">画质预设</string>
+    <string name="preset_smooth">流畅</string>
+    <string name="preset_balance">均衡</string>
+    <string name="preset_hd">高清</string>
+    <string name="preset_max">极致</string>
+    <string name="quality_fps_fmt">%d fps</string>
+    <string name="quality_bitrate_fmt">%d kbps</string>
+    <string name="quality_mode_cbr">CBR 恒定码率（稳定带宽）</string>
+    <string name="quality_mode_crf">CRF 恒定质量（按画质）</string>
+    <string name="quality_applied">画质已应用（即时生效）</string>
+    <string name="quality_hot_hint">以上参数即时生效，无需断开重连；也会保存为默认值。</string>
+
+    <!-- 远程命令 -->
+    <string name="command_not_enabled">服务器未启用远程命令（command_enabled）</string>
+    <string name="command_hint">如：firefox 或 xdg-open ~/Documents</string>
+    <string name="command_desc">在远程桌面会话中以当前用户执行 shell 命令</string>
+    <string name="command_sent">命令已发送</string>
+    <string name="command_done">命令执行完成</string>
+
+    <!-- 截图 -->
+    <string name="screenshot_saving">正在截取远程画面…</string>
+    <string name="screenshot_saved">截图已保存到下载目录 ✓</string>
+    <string name="screenshot_failed">截图失败</string>
+
+    <!-- 麦克风 / 摄像头上行 -->
+    <string name="mic_on">麦克风：开（远端虚拟麦克风）</string>
+    <string name="mic_off">麦克风：关</string>
+    <string name="mic_no_encoder">此设备不支持 Opus 编码，无法上行麦克风</string>
+    <string name="mic_error">麦克风错误：%s</string>
+    <string name="mic_perm_refused">未授予麦克风权限，请到系统设置开启</string>
+    <string name="mic_disabled_remote">远端已禁用麦克风上行</string>
+    <string name="webcam_on">摄像头：开（远端虚拟摄像头）</string>
+    <string name="webcam_off">摄像头：关</string>
+    <string name="webcam_error">摄像头错误：%s</string>
+    <string name="webcam_perm_refused">未授予摄像头权限，请到系统设置开启</string>
+    <string name="webcam_disabled_remote">远端已禁用摄像头上行</string>
+
+    <!-- 打印 -->
+    <string name="print_received">收到远程打印作业：%s</string>
+    <string name="command_error">远端命令错误</string>
+
+    <!-- 有线键盘模式 -->
+    <string name="hw_keyboard_on">已插入键盘：切换到鼠标 + 有线键盘模式</string>
+    <string name="hw_keyboard_off">键盘已拔出：恢复触屏模式</string>
+
+    <!-- 快捷键管理 -->
+    <string name="shortcuts_title">快捷键</string>
+    <string name="shortcuts_hint">点击组合即发送；长按列表可删除自定义项。\n插入物理键盘后，在添加对话框中直接按下组合键即可录制。</string>
+    <string name="shortcut_add">添加快捷键</string>
+    <string name="shortcut_manage">＋管理</string>
+    <string name="shortcut_delete">删除</string>
+    <string name="shortcut_builtin">预置</string>
+    <string name="shortcut_name">名称</string>
+    <string name="shortcut_name_hint">如：Ctrl+Alt+T</string>
+    <string name="shortcut_modifiers">修饰键（可多选）</string>
+    <string name="shortcut_pick_key">选择主键</string>
+    <string name="shortcut_recorded">已捕获：%s</string>
+    <string name="shortcut_record_hint">提示：插入有线/蓝牙键盘后，直接在此对话框按下组合键（如 Ctrl+Shift+Esc）即可自动录制；或点亮修饰键后从键位表选择主键。</string>
+    <string name="shortcut_need_key">请先选择主键</string>
+    <string name="shortcut_saved">快捷键已保存</string>
+
+    <!-- 文件管理器 -->
+    <string name="files_empty">目录为空</string>
+    <string name="files_selected">已选 %d 项</string>
+    <string name="select_all">全选/反选</string>
+    <string name="download">下载</string>
+    <string name="downloading">正在下载 %d 个文件…</string>
+    <string name="download_done_all">下载完成：%d 个文件已存入下载目录 ✓</string>
+    <string name="download_done_part">下载完成：%1$d/%2$d（部分失败）</string>
+    <string name="uploading_n">正在上传 %d 个文件…</string>
+    <string name="upload_done_all">上传完成：%d 个文件 ✓</string>
+    <string name="back">返回</string>
+
+    <!-- 服务器列表批量操作 -->
+    <string name="batch_delete">删除所选</string>
+    <string name="batch_test">测试所选</string>
+    <string name="batch_connect_all">全部连接</string>
+    <string name="batch_selected_count">已选 %d 台</string>
+    <string name="batch_delete_confirm">确定删除所选 %d 台服务器？</string>
+    <string name="batch_deleted">已删除 %d 台</string>
+
+    <!-- 设置 -->
+    <string name="pref_quality">画质与性能</string>
+    <string name="pref_video_crf">视频 CRF 质量</string>
+    <string name="pref_video_crf_desc">越低画质越高（推荐 20–28），需重连生效</string>
+    <string name="pref_video_bitrate">视频码率 (kbps)</string>
+    <string name="pref_video_bitrate_desc">CBR 模式下的目标码率，需重连生效</string>
+    <string name="pref_framerate">帧率</string>
+    <string name="pref_framerate_desc">需重连生效</string>
+    <string name="pref_rate_control">码率控制模式</string>
+    <string name="pref_audio_bitrate">音频码率 (bps)</string>
+    <string name="pref_auto_audio">进入会话自动开启声音</string>
+    <string name="pref_gestures">手势与输入</string>
+    <string name="pref_two_finger_tap">双指轻点</string>
+    <string name="pref_long_press">长按</string>
+    <string name="pref_sticky_modifiers">粘滞修饰键</string>
+    <string name="pref_input_touch_mode">默认触摸模式</string>
+    <string name="pref_security">安全</string>
+    <string name="pref_clear_passwords">清除所有已保存密码</string>
+    <string name="pref_clear_passwords_desc">删除所有服务器配置中保存的账号密码</string>
+    <string name="pref_cleared">已清除</string>
+    <string name="pref_about_app">Selkies 原生安卓客户端 v%1$s\n基于 Selkies v2 WebSocket 流协议\n非 WebView 封装，原生 MediaCodec 硬解码\n\n开源地址：\nhttps://github.com/cshdotcom/selkies-android</string>
+
+    <!-- v1.2.0：剪贴板设置 -->
+    <string name="pref_clipboard_title">剪贴板同步</string>
+    <string name="pref_clipboard_mode">同步方向</string>
+    <string name="pref_clipboard_binary">二进制剪贴板（图片）</string>
+    <string name="pref_clipboard_binary_desc">同步图片剪贴板（服务端也需开启）</string>
+
+    <!-- 数组 -->
+    <string-array name="framerate_entries">
+        <item>30 fps</item>
+        <item>60 fps</item>
+        <item>15 fps（省流）</item>
+    </string-array>
+    <string-array name="framerate_values">
+        <item>30</item>
+        <item>60</item>
+        <item>15</item>
+    </string-array>
+    <string-array name="rate_control_entries">
+        <item>CBR 恒定码率</item>
+        <item>CRF 恒定质量</item>
+    </string-array>
+    <string-array name="rate_control_values">
+        <item>cbr</item>
+        <item>crf</item>
+    </string-array>
+    <string-array name="two_finger_tap_entries">
+        <item>右键</item>
+        <item>中键</item>
+    </string-array>
+    <string-array name="two_finger_tap_values">
+        <item>right</item>
+        <item>middle</item>
+    </string-array>
+    <string-array name="long_press_entries">
+        <item>右键</item>
+        <item>中键</item>
+        <item>左键拖动</item>
+    </string-array>
+    <string-array name="long_press_values">
+        <item>right</item>
+        <item>middle</item>
+        <item>drag</item>
+    </string-array>
+    <string-array name="touch_mode_entries">
+        <item>触摸板（相对移动）</item>
+        <item>直接触摸（绝对坐标）</item>
+    </string-array>
+    <string-array name="touch_mode_values">
+        <item>trackpad</item>
+        <item>direct</item>
+    </string-array>
+    <string-array name="clipboard_mode_entries">
+        <item>双向同步</item>
+        <item>仅接收（远端→本机）</item>
+        <item>仅发送（本机→远端）</item>
+        <item>关闭自动同步</item>
+    </string-array>
+    <string-array name="clipboard_mode_values">
+        <item>both</item>
+        <item>recv</item>
+        <item>send</item>
+        <item>off</item>
+    </string-array>
+
+
+    <!-- v1.3.0 悬浮键盘 / 导入导出 / 主题 -->
+    <string name="kb_float_title">快捷键盘 · 按住此处拖动</string>
+    <string name="mouse_mode_now_touchpad">触摸板模式（滑动=移动指针，轻点=左键，双指=右键/滚动）</string>
+    <string name="mouse_mode_now_direct">直接触摸模式（手指位置=鼠标位置）</string>
+    <string name="export_servers">导出服务器列表</string>
+    <string name="import_servers">导入服务器列表</string>
+    <string name="export_include_creds">同时导出账号密码？（明文，请妥善保管）</string>
+    <string name="export_done">已导出 %d 台服务器</string>
+    <string name="import_done">已导入 %d 台服务器（合并去重）</string>
+    <string name="import_failed">导入失败：文件格式不正确</string>
+    <string name="double_back_exit">再按一次返回键退出</string>
+    <string name="theme_appearance">外观</string>
+    <string name="theme_follow_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+</resources>

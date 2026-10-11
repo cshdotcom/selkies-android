@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设置页偏好项 -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/pref_quality">
+
+        <SeekBarPreference
+            android:key="video_crf"
+            android:max="51"
+            android:title="@string/pref_video_crf"
+            android:summary="@string/pref_video_crf_desc"
+            app:defaultValue="25"
+            app:showSeekBarValue="true" />
+
+        <EditTextPreference
+            android:key="video_bitrate"
+            android:title="@string/pref_video_bitrate"
+            android:summary="@string/pref_video_bitrate_desc"
+            android:defaultValue="8000"
+            android:inputType="number"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            android:key="framerate"
+            android:title="@string/pref_framerate"
+            android:summary="@string/pref_framerate_desc"
+            android:entries="@array/framerate_entries"
+            android:entryValues="@array/framerate_values"
+            android:defaultValue="30"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            android:key="rate_control"
+            android:title="@string/pref_rate_control"
+            android:entries="@array/rate_control_entries"
+            android:entryValues="@array/rate_control_values"
+            android:defaultValue="cbr"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            android:key="audio_bitrate"
+            android:title="@string/pref_audio_bitrate"
+            android:defaultValue="320000"
+            android:inputType="number"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:key="auto_audio"
+            android:title="@string/pref_auto_audio"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_gestures">
+
+        <ListPreference
+            android:key="touch_mode"
+            android:title="@string/pref_input_touch_mode"
+            android:entries="@array/touch_mode_entries"
+            android:entryValues="@array/touch_mode_values"
+            android:defaultValue="trackpad"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            android:key="two_finger_tap"
+            android:title="@string/pref_two_finger_tap"
+            android:entries="@array/two_finger_tap_entries"
+            android:entryValues="@array/two_finger_tap_values"
+            android:defaultValue="right"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            android:key="long_press"
+            android:title="@string/pref_long_press"
+            android:entries="@array/long_press_entries"
+            android:entryValues="@array/long_press_values"
+            android:defaultValue="right"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:key="pinch_zoom"
+            android:title="双指捏合缩放 / Pinch zoom"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="follow_rotation"
+            android:title="分辨率跟随屏幕旋转 / Resolution follows rotation"
+            android:summary="旋转设备时调整远端桌面分辨率"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_clipboard_title">
+
+        <ListPreference
+            android:key="clipboard_mode"
+            android:title="@string/pref_clipboard_mode"
+            android:entries="@array/clipboard_mode_entries"
+            android:entryValues="@array/clipboard_mode_values"
+            android:defaultValue="both"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:key="clipboard_binary"
+            android:title="@string/pref_clipboard_binary"
+            android:summary="@string/pref_clipboard_binary_desc"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_security">
+
+        <SwitchPreferenceCompat
+            android:key="auto_reconnect"
+            android:title="断线自动重连 / Auto reconnect"
+            android:defaultValue="true" />
+
+        <EditTextPreference
+            android:key="max_reconnects"
+            android:title="最大重连次数 / Max reconnect attempts"
+            android:summary="0 = 无限"
+            android:defaultValue="10"
+            android:inputType="number"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            android:key="clear_passwords"
+            android:title="@string/pref_clear_passwords"
+            android:summary="@string/pref_clear_passwords_desc" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/about_title">
+        <Preference
+            android:key="about_app"
+            android:title="@string/about_title"
+            android:summary="Selkies v2 WebSocket · 原生 MediaCodec 硬解" />
+    </PreferenceCategory>
+</PreferenceScreen>

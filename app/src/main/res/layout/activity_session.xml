@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 远程会话页：全屏黑底 + 流视图 + 状态浮层 + 控制面板(两行) + IME捕获层 + 虚拟键盘 -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- 视频表面（代码中动态添加 SurfaceView，按流分辨率与缩放状态布局） -->
+    <FrameLayout
+        android:id="@+id/stream_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 隐藏面板的小把手 -->
+    <ImageButton
+        android:id="@+id/btn_show_panel"
+        android:layout_width="44dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="8dp"
+        android:background="@drawable/bg_scrim_round"
+        android:contentDescription="@string/panel_show"
+        android:src="@drawable/ic_chevron_up"
+        android:visibility="gone"
+        app:tint="@color/white" />
+
+    <!-- 顶部控制面板（两行：输入/媒体 + 硬件/全屏） -->
+    <LinearLayout
+        android:id="@+id/panel_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_scrim_round"
+        android:orientation="vertical"
+        android:padding="4dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_idr"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_idr"
+                android:src="@drawable/ic_idr"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_clipboard"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_clipboard_sync"
+                android:src="@drawable/ic_clipboard"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_keyboard"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_keyboard"
+                android:src="@drawable/ic_keyboard"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_mouse_mode"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_mouse_mode"
+                android:src="@drawable/ic_mouse"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_audio"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_audio"
+                android:src="@drawable/ic_audio_on"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_hide_panel"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_hide"
+                android:src="@drawable/ic_hide"
+                app:tint="@color/white" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_files"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_files"
+                android:src="@drawable/ic_files"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_screenshot"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_screenshot"
+                android:src="@drawable/ic_screenshot"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_mic"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_mic"
+                android:src="@drawable/ic_mic"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_webcam"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_webcam"
+                android:src="@drawable/ic_webcam"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_fullscreen"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_fullscreen"
+                android:src="@drawable/ic_fullscreen"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_stats"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_stats"
+                android:src="@drawable/ic_stats"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_disconnect"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_disconnect"
+                android:src="@drawable/ic_disconnect"
+                app:tint="@color/status_err" />
+        </LinearLayout>
+
+        <!-- v1.2.0 第三行：应用启动器 / 画质热切换 / 远程命令 / 诊断 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_apps"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_apps"
+                android:src="@drawable/ic_apps"
+                android:visibility="gone"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_quality"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_quality"
+                android:src="@drawable/ic_quality"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_command"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_command"
+                android:src="@drawable/ic_terminal"
+                android:visibility="gone"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_diag"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_diag"
+                android:src="@drawable/ic_diag"
+                app:tint="@color/white" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 统计浮层 -->
+    <TextView
+        android:id="@+id/txt_stats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="10dp"
+        android:background="@drawable/bg_scrim_round"
+        android:fontFamily="monospace"
+        android:padding="8dp"
+        android:textColor="@color/selkies_teal"
+        android:textSize="11sp"
+        android:visibility="gone" />
+
+    <!-- 连接状态浮层（全屏居中，连接中/等待画面/错误时显示） -->
+    <LinearLayout
+        android:id="@+id/status_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/scrim_70"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <ProgressBar
+            android:id="@+id/status_progress"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminateTint="@color/selkies_blue" />
+
+        <TextView
+            android:id="@+id/txt_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/status_connecting"
+            android:textColor="@color/white"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/txt_status_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#99FFFFFF"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_reconnect"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/reconnect_now"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_exit"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@string/exit_session"
+                android:textColor="@color/white"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Basic Auth 凭据输入区（NEED_AUTH 时展开） -->
+        <LinearLayout
+            android:id="@+id/auth_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_hint"
+                android:textColor="#99FFFFFF"
+                android:textSize="13sp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="@string/server_username"
+                android:textColorHint="#88FFFFFF">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_auth_user"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/white" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="@string/server_password"
+                android:textColorHint="#88FFFFFF"
+                app:endIconMode="password_toggle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_auth_pass"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/white" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_auth_ok"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/selkies_blue"
+                android:text="@string/confirm"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 底部提示条（剪贴板/上传结果等瞬时通知） -->
+    <TextView
+        android:id="@+id/txt_toast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="130dp"
+        android:background="@drawable/bg_scrim_round"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <!-- IME 直通捕获层（透明 1px）：点键盘后直接弹输入法，打字实时 co,end -->
+    <com.selkies.client.input.ImeCaptureView
+        android:id="@+id/ime_capture"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom|start"
+        android:alpha="0.01" />
+
+    <!-- 悬浮快捷键盘（可拖动悬浮窗，v1.3.0） -->
+    <include
+        android:id="@+id/virtual_keyboard_include"
+        layout="@layout/view_virtual_keyboard" />
+</FrameLayout>

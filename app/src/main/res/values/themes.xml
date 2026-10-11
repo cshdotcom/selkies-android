@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v1.3.0：DayNight 深浅色主题（跟随系统 + 设置内手动切换）。
+         会话页布局固定黑底（视频），不受主题影响。 -->
+    <style name="Theme.Selkies" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/selkies_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/selkies_blue_dark</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorSecondary">@color/selkies_teal</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
+    </style>
+</resources>

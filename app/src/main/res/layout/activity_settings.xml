@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v1.3.0 设置页（自定义 UI：MaterialSwitch + ToggleGroup，修复偏好开关无法点击问题） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:navigationContentDescription="@string/close"
+        app:title="@string/settings_title"
+        app:titleTextColor="?attr/colorOnSurface" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+
+            <!-- ============ 外观 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/theme_appearance" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/tg_theme"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true" app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_theme_system" style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="@string/theme_follow_system" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_theme_light" style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="@string/theme_light" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_theme_dark" style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="@string/theme_dark" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- ============ 画质与性能 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/pref_quality" />
+
+            <LinearLayout style="@style/SettingsRow"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/pref_video_crf" android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+
+                    <SeekBar
+                        android:id="@+id/seek_crf"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:max="51" android:progress="25" />
+
+                    <TextView
+                        android:id="@+id/txt_crf"
+                        android:layout_width="40dp" android:layout_height="wrap_content"
+                        android:gravity="center" android:text="25"
+                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_bitrate" style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:gravity="start|center_vertical"
+                android:text="@string/pref_video_bitrate" />
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/pref_framerate" android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tg_framerate"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    app:selectionRequired="true" app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_fps15" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="15" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_fps30" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="30" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_fps60" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="60" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/pref_rate_control" android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tg_rate"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    app:selectionRequired="true" app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_rate_cbr" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="CBR" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_rate_crf" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="CRF" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+            <LinearLayout style="@style/SettingsRow"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/pref_auto_audio" android:textAppearance="?attr/textAppearanceBodyLarge" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_auto_audio"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_audio_bitrate" style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:gravity="start|center_vertical"
+                android:text="@string/pref_audio_bitrate" />
+
+            <!-- ============ 手势与触控 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/pref_gestures" />
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/pref_input_touch_mode" android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tg_touch_mode"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    app:selectionRequired="true" app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_touch_trackpad" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="@string/mouse_mode_touch" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_touch_direct" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="@string/mouse_mode_direct" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/pref_two_finger_tap" android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tg_two_finger"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    app:selectionRequired="true" app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_2f_right" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="右键" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_2f_middle" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="中键" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_2f_scroll" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="滚动" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/pref_long_press" android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/tg_long_press"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    app:selectionRequired="true" app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_lp_right" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="右键" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_lp_middle" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="中键" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_lp_drag" style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="拖拽" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+            <LinearLayout style="@style/SettingsRow"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="双指捏合缩放"
+                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_pinch"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/SettingsRow"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="分辨率跟随旋转"
+                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_rotation"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ============ 剪贴板 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/pref_clipboard_title" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_clipboard_mode" style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:gravity="start|center_vertical" android:text="@string/pref_clipboard_mode" />
+
+            <LinearLayout style="@style/SettingsRow"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/pref_clipboard_binary"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                    <TextView
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/pref_clipboard_binary_desc"
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_clip_binary"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ============ 连接 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/pref_security" />
+
+            <LinearLayout style="@style/SettingsRow"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="断线自动重连"
+                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_reconnect"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_max_reconnects" style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:gravity="start|center_vertical"
+                android:text="最大重连次数" />
+
+            <!-- ============ 数据 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="数据" />
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_export" style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="@string/export_servers" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_import" style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp" android:layout_weight="1"
+                    android:text="@string/import_servers" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_clear_passwords" style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:gravity="start|center_vertical"
+                android:text="@string/pref_clear_passwords" />
+
+            <!-- ============ 关于 ============ -->
+            <TextView style="@style/SettingsSection"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/about_title" />
+
+            <TextView
+                android:id="@+id/txt_about"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:lineSpacingExtra="4dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_crash_log" style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="查看崩溃日志" />
+
+            <Space android:layout_width="match_parent" android:layout_height="24dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
