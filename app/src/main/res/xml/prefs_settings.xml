@@ -89,6 +89,23 @@
             android:defaultValue="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/pref_clipboard_title">
+
+        <ListPreference
+            android:key="clipboard_mode"
+            android:title="@string/pref_clipboard_mode"
+            android:entries="@array/clipboard_mode_entries"
+            android:entryValues="@array/clipboard_mode_values"
+            android:defaultValue="both"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:key="clipboard_binary"
+            android:title="@string/pref_clipboard_binary"
+            android:summary="@string/pref_clipboard_binary_desc"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/pref_security">
 
         <SwitchPreferenceCompat

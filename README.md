@@ -13,7 +13,10 @@
 - **双端点自动探测**：优先 `/api/websockets`（Selkies v2），404 自动回退 `/api/ws`（旧部署）
 - **301/302 重定向自动跟随**：Nginx `http → https` 强制跳转场景自动切换 WSS（最多 6 跳）
 - **Basic Auth 自动识别**：服务端 401 + `WWW-Authenticate: Basic` 时弹出账号密码表单，认证后自动重试
-- **Cloudflare 兼容**：所有请求（探测 + WS 握手）携带完整浏览器请求头（Chrome UA / 匹配 Host 的 Origin / Accept-Language），避免 CF 400 拦截
+- **Cloudflare 兼容**：所有请求（探测 + WS 握手）携带完整浏览器请求头（Chrome UA / 匹配 Host 的 Origin / Accept-Language / Cache-Control），避免 CF 400 拦截
+- **多策略 WS 握手自动重试**（v1.2.0，修复「ws: unexpected end of stream」）：握手期网络层失败时自动轮换策略重试 —— ①完整浏览器头 ②无 Origin（部分反代对跨源 Origin 直接 RST）③极简头（仅 UA+认证）；会话中断不轮换直接重连
+- **连接诊断中心**（v1.2.0）：DiagLog 环形日志记录探测/重定向/认证/握手/重试全过程，会话内面板一键查看/复制/分享；服务器编辑页「测试连接」附带 WS 握手干跑 + 完整诊断报告（无 adb 也能远程排障）
+- **人性化错误提示**（v1.2.0）：unexpected end of stream / TLS 失败 / 超时 / 4xx-5xx 全部翻译成中文原因 + 行动建议
 - **自签名证书支持**：LSIO 3001 端口自签 HTTPS 场景可勾选"信任自签名证书"
 - **断线自动重连**：指数退避（1s→15s），尊重服务端 4029 重连防抖；可设置次数上限或手动重连
 
@@ -57,6 +60,27 @@
 - 远端文件浏览（`GET /api/files/<path>/` 目录列表，面包屑导航 + 上级目录）
 - 单文件下载 + **多选批量下载**（长按进入多选，存入系统 Downloads）
 - 多文件上传（系统选择器多选，上传到当前目录，>48MB 自动分片兼容 CF）
+
+### 远程应用启动器（v1.2.0 新增，官方 Apps 面板原生等价物）
+- 应用目录自动拉取：服务器本地仓库（`GET /api/apps/metadata.yml`，带会话认证）→ 404 自动回退 GitHub proot-apps 在线目录
+- **一键安装 / 启动 / 更新 / 卸载**（`cmd,selkies-proot run|install|update|remove <name>`，命令走当前会话 WS）
+- 已安装集合实时同步（`server_settings.apps_installed` + `system apps_installed` 广播），已安装置顶
+- 搜索过滤 + 字母头像；`ui_sidebar_show_apps` / `command_enabled` 服务端门禁自动识别（未启用时按钮自动隐藏）
+
+### 画质热切换（v1.2.0 新增）
+- 会话内即时调整：**无需断开重连**（部分 `SETTINGS` 载荷热更新，官方 `sendFullSettingsUpdateToServer` 同款机制）
+- 一键预设：流畅 / 均衡 / 高清 / 极致
+- 帧率（10-60fps 步进 5）、CBR/CRF 模式切换、CRF 质量滑杆、码率滑杆；保存为默认值
+
+### 远程命令（v1.2.0 新增）
+- 会话内直接输入 shell 命令在远端执行（`cmd,<command>`，服务端 `command_enabled` 门禁）
+- 回执处理：`command_error` 错误提示 / `command_done` 完成 / `reload` 自动刷新关键帧
+
+### 剪贴板双向同步（v1.2.0 大幅增强）
+- **双向自动同步**：本机复制 → 远端（`cw`，含图片 `cb` 二进制上行）；远端复制 → 本机（`clipboard,` / 分段重组），内容签名回声抑制不回环
+- **同步方向设置**：双向 / 仅接收 / 仅发送 / 关闭（会话内一键切换 + 系统设置页）
+- **二进制剪贴板**：远端图片剪贴板自动存入系统下载目录（`enable_binary_clipboard`）
+- 手动操作：拉取远端 / 推送本机 / 编辑文本发送
 
 ### 工具与设置
 - **全屏沉浸模式**（v1.1.0）：一键隐藏系统栏与面板，滑动边缘可呼出
@@ -123,6 +147,35 @@ APP 服务器配置：
 | 用户名/密码 | 按需 | 后端 `PASSWORD`/`CUSTOM_USER` 环境变量 |
 
 公网访问：直接填公网域名 + 443 + HTTPS（Cloudflare 代理兼容）。
+
+---
+
+## 故障排查：「ws: unexpected end of stream」
+
+这是反向代理在 WebSocket 升级握手中途断开连接的典型表现。v1.2.0 已内置三层修复：
+
+1. **自动重试**：握手失败自动换 3 种请求头组合重试（无需手动操作）
+2. **诊断日志**：会话面板「诊断」按钮（脉冲线图标）→ 查看每一步 → 一键复制/分享回传排障
+3. **服务器编辑页测试**：「测试连接」会真实做一次 WS 握手干跑并给出报告
+
+若仍失败，请检查你的 Nginx 反代配置（WebSocket 必需）：
+
+```nginx
+location /api/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;      # 必需
+    proxy_set_header Connection "upgrade";       # 必需
+    proxy_set_header Host $host;
+    proxy_read_timeout 3600s;
+    proxy_buffering off;
+}
+```
+
+其他提示：
+- 自签名证书 → 服务器设置开启「信任自签名证书」
+- Cloudflare → 免费版支持 WS，但需关闭对 `/api/` 的 WAF/防护规则
+- 明文 http → Android 默认禁止，请使用 https 或反代 443
 
 ---
 

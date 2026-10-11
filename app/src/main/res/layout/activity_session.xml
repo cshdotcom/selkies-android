@@ -165,6 +165,51 @@
                 android:src="@drawable/ic_disconnect"
                 app:tint="@color/status_err" />
         </LinearLayout>
+
+        <!-- v1.2.0 第三行：应用启动器 / 画质热切换 / 远程命令 / 诊断 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_apps"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_apps"
+                android:src="@drawable/ic_apps"
+                android:visibility="gone"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_quality"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_quality"
+                android:src="@drawable/ic_quality"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_command"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_command"
+                android:src="@drawable/ic_terminal"
+                android:visibility="gone"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_diag"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/panel_diag"
+                android:src="@drawable/ic_diag"
+                app:tint="@color/white" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- 统计浮层 -->

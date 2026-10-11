@@ -213,7 +213,8 @@ object Protocol {
         crf: Int,
         bitrateKbps: Int,
         rateControl: String,
-        audioBitrate: Int
+        audioBitrate: Int,
+        binaryClipboard: Boolean = true
     ): String {
         val w = alignResolution(clientWidth).coerceAtMost(4080)
         val h = alignResolution(clientHeight).coerceAtMost(4080)
@@ -232,7 +233,7 @@ object Protocol {
         o.put("use_cpu", false)
         o.put("use_paint_over_quality", true)
         o.put("scaling_dpi", 96)
-        o.put("enable_binary_clipboard", false)
+        o.put("enable_binary_clipboard", binaryClipboard)
         o.put("force_aligned_resolution", false)
         o.put("useCssScaling", false)
         o.put("displayId", "primary")

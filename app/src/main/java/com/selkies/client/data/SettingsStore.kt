@@ -82,4 +82,19 @@ class SettingsStore(context: Context) {
     var pinchZoom: Boolean
         get() = prefs.getBoolean("pinch_zoom", true)
         set(v) = prefs.edit().putBoolean("pinch_zoom", v).apply()
-}
+
+    // ---------- v1.2.0：剪贴板 ----------
+
+    /** 剪贴板同步方向：both（双向）/ recv（仅接收）/ send（仅发送）/ off（关闭自动同步） */
+    var clipboardMode: String
+        get() = prefs.getString("clipboard_mode", "both") ?: "both"
+        set(v) = prefs.edit().putString("clipboard_mode", v).apply()
+
+    /** 二进制剪贴板（图片等，SETTINGS enable_binary_clipboard；服务端也需开启才生效） */
+    var clipboardBinary: Boolean
+        get() = prefs.getBoolean("clipboard_binary", true)
+        set(v) = prefs.edit().putBoolean("clipboard_binary", v).apply()
+
+    val clipboardRecv: Boolean get() = clipboardMode == "both" || clipboardMode == "recv"
+    val clipboardSend: Boolean get() = clipboardMode == "both" || clipboardMode == "send"
+} 

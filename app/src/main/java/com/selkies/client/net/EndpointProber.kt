@@ -105,6 +105,7 @@ object EndpointProber {
             val resp = try {
                 client.newCall(req).execute()
             } catch (e: Exception) {
+                DiagLog.e("探测请求失败: ${e.javaClass.simpleName}: ${e.message}")
                 return ProbeResult.Failed(
                     if (e.message?.contains("timeout", true) == true) "timeout" else "network",
                     e.message
@@ -113,10 +114,13 @@ object EndpointProber {
             try {
                 lastCode = resp.code
                 lastWwwAuth = resp.header("WWW-Authenticate")
+                DiagLog.i("GET $statusUrl → ${resp.code}")
                 if (resp.code in 301..308 && resp.header("Location") != null) {
                     // 手动跟随重定向：http→https 切换就在这里发生
-                    val next = statusUrl.resolve(resp.header("Location")!!)
-                        ?: return ProbeResult.Failed("bad_redirect", resp.header("Location"))
+                    val loc = resp.header("Location")!!
+                    DiagLog.i("重定向 $hop: → $loc")
+                    val next = statusUrl.resolve(loc)
+                        ?: return ProbeResult.Failed("bad_redirect", loc)
                     statusUrl = next
                     current = stripPathSuffix(next, Protocol.HTTP_STATUS_PATH) ?: next
                     continue
@@ -160,9 +164,11 @@ object EndpointProber {
             val resp = try {
                 client.newCall(req).execute()
             } catch (e: Exception) {
+                DiagLog.w("WS 路径探测失败 $path: ${e.message}")
                 continue // 该路径网络失败，尝试下一个
             }
             resp.use {
+                DiagLog.i("GET $wsProbeUrl → ${it.code}")
                 when {
                     it.code == 401 -> {
                         // Basic Auth 凭据缺失或不正确 → 交由 UI 弹凭据表单
@@ -182,19 +188,30 @@ object EndpointProber {
     /**
      * 构造浏览器风格请求。
      * Origin 必须与 Host 匹配（Selkies 服务端校验规则：netloc == host）。
+     *
+     * @param strategy v1.2.0 握手策略：0=完整浏览器头（默认）；1=无 Origin（某些反代对
+     * 跨源 Origin 头直接 RST 连接）；2=极简头（仅 UA + 认证，最接近裸 WS 握手）。
+     * 策略轮换仅在默认策略握手失败时由引擎逐个尝试。
      */
-    fun baseRequest(url: HttpUrl, basicAuth: String?, headOnly: Boolean): Request.Builder {
+    fun baseRequest(url: HttpUrl, basicAuth: String?, headOnly: Boolean, strategy: Int = 0): Request.Builder {
         val b = if (headOnly) Request.Builder().head() else Request.Builder().get()
         b.url(url)
         b.header("User-Agent", BROWSER_UA)
-        val origin = buildString {
-            append(if (url.isHttps) "https" else "http")
-            append("://")
-            append(url.host)
-            if (url.port != 80 && url.port != 443) append(":").append(url.port)
+        if (strategy == 0) {
+            val origin = buildString {
+                append(if (url.isHttps) "https" else "http")
+                append("://")
+                append(url.host)
+                if (url.port != 80 && url.port != 443) append(":").append(url.port)
+            }
+            b.header("Origin", origin)
         }
-        b.header("Origin", origin)
-        b.header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+        if (strategy <= 1) {
+            b.header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+            // 对齐浏览器 WS 握手头（部分反代/WAF 严格匹配）
+            b.header("Cache-Control", "no-cache")
+            b.header("Pragma", "no-cache")
+        }
         if (basicAuth != null) b.header("Authorization", basicAuth)
         return b
     }

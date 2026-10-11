@@ -126,6 +126,71 @@
     <string name="panel_fullscreen">全屏</string>
     <string name="fullscreen_on">已进入全屏（点右上角把手退出）</string>
 
+    <!-- v1.2.0 新增：面板第三行 -->
+    <string name="panel_apps">远程应用</string>
+    <string name="panel_quality">画质</string>
+    <string name="panel_command">远程命令</string>
+    <string name="panel_diag">连接诊断</string>
+    <string name="diag_copy">复制诊断日志</string>
+    <string name="diag_share">分享</string>
+    <string name="diag_copied">诊断日志已复制到剪贴板</string>
+
+    <!-- 剪贴板（v1.2.0 双向同步 + 设置） -->
+    <string name="clip_mode_both">双向同步</string>
+    <string name="clip_mode_recv">仅接收（远端→本机）</string>
+    <string name="clip_mode_send">仅发送（本机→远端）</string>
+    <string name="clip_mode_off">关闭自动同步</string>
+    <string name="clip_current_mode">当前：%s（本机与远端复制的内容自动互通）</string>
+    <string name="clip_action_pull">从远端拉取剪贴板</string>
+    <string name="clip_action_push">推送本机剪贴板到远端</string>
+    <string name="clip_action_edit_send">编辑文本发送…</string>
+    <string name="clip_action_settings">剪贴板同步设置…</string>
+    <string name="clip_mode_set">剪贴板模式：%s</string>
+    <string name="clip_pulling">正在拉取远端剪贴板…</string>
+    <string name="clip_local_empty">本机剪贴板为空</string>
+    <string name="clip_edit_hint">输入要发送到远端的文本</string>
+    <string name="clip_image_saved">远端图片剪贴板已保存：%s</string>
+    <string name="clip_image_save_failed">图片剪贴板保存失败</string>
+
+    <!-- 远程应用启动器 -->
+    <string name="apps_title">远程应用</string>
+    <string name="apps_refresh">刷新</string>
+    <string name="apps_search_hint">搜索应用…</string>
+    <string name="apps_loading">正在加载应用目录…</string>
+    <string name="apps_empty">没有匹配的应用</string>
+    <string name="apps_load_failed">应用目录加载失败：%s</string>
+    <string name="apps_source_local">目录来源：服务器本地仓库</string>
+    <string name="apps_source_remote">目录来源：proot-apps 在线仓库</string>
+    <string name="apps_launch">启动</string>
+    <string name="apps_install">安装</string>
+    <string name="apps_update">更新</string>
+    <string name="apps_remove">卸载</string>
+    <string name="apps_more_actions">更多操作</string>
+    <string name="apps_cmd_sent">已发送：%s</string>
+    <string name="apps_no_session">会话未连接，无法执行</string>
+    <string name="apps_not_enabled">服务器未启用应用面板（ui_sidebar_show_apps）</string>
+    <string name="apps_installed_updated">远程应用列表已更新（共 %d 个）</string>
+
+    <!-- 画质热切换 -->
+    <string name="quality_presets">画质预设</string>
+    <string name="preset_smooth">流畅</string>
+    <string name="preset_balance">均衡</string>
+    <string name="preset_hd">高清</string>
+    <string name="preset_max">极致</string>
+    <string name="quality_fps_fmt">%d fps</string>
+    <string name="quality_bitrate_fmt">%d kbps</string>
+    <string name="quality_mode_cbr">CBR 恒定码率（稳定带宽）</string>
+    <string name="quality_mode_crf">CRF 恒定质量（按画质）</string>
+    <string name="quality_applied">画质已应用（即时生效）</string>
+    <string name="quality_hot_hint">以上参数即时生效，无需断开重连；也会保存为默认值。</string>
+
+    <!-- 远程命令 -->
+    <string name="command_not_enabled">服务器未启用远程命令（command_enabled）</string>
+    <string name="command_hint">如：firefox 或 xdg-open ~/Documents</string>
+    <string name="command_desc">在远程桌面会话中以当前用户执行 shell 命令</string>
+    <string name="command_sent">命令已发送</string>
+    <string name="command_done">命令执行完成</string>
+
     <!-- 截图 -->
     <string name="screenshot_saving">正在截取远程画面…</string>
     <string name="screenshot_saved">截图已保存到下载目录 ✓</string>
@@ -210,6 +275,12 @@
     <string name="pref_cleared">已清除</string>
     <string name="pref_about_app">Selkies 原生安卓客户端 v%1$s\n基于 Selkies v2 WebSocket 流协议\n非 WebView 封装，原生 MediaCodec 硬解码\n\n开源地址：\nhttps://github.com/cshdotcom/selkies-android</string>
 
+    <!-- v1.2.0：剪贴板设置 -->
+    <string name="pref_clipboard_title">剪贴板同步</string>
+    <string name="pref_clipboard_mode">同步方向</string>
+    <string name="pref_clipboard_binary">二进制剪贴板（图片）</string>
+    <string name="pref_clipboard_binary_desc">同步图片剪贴板（服务端也需开启）</string>
+
     <!-- 数组 -->
     <string-array name="framerate_entries">
         <item>30 fps</item>
@@ -254,5 +325,17 @@
     <string-array name="touch_mode_values">
         <item>trackpad</item>
         <item>direct</item>
+    </string-array>
+    <string-array name="clipboard_mode_entries">
+        <item>双向同步</item>
+        <item>仅接收（远端→本机）</item>
+        <item>仅发送（本机→远端）</item>
+        <item>关闭自动同步</item>
+    </string-array>
+    <string-array name="clipboard_mode_values">
+        <item>both</item>
+        <item>recv</item>
+        <item>send</item>
+        <item>off</item>
     </string-array>
 </resources>

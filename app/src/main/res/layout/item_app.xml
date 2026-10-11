@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 应用条目：字母头像 + 名称/描述 + 动作按钮 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="10dp"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/bg_scrim_round"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/txt_app_avatar"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_app_avatar"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/txt_app_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txt_app_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="#99FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_app_action"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="64dp"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <ImageButton
+        android:id="@+id/btn_app_menu"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/apps_more_actions"
+        android:src="@android:drawable/ic_menu_more"
+        app:tint="#99FFFFFF" />
+</LinearLayout>

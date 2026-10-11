@@ -86,6 +86,64 @@
     <string name="upload_empty">No file selected</string>
     <string name="mouse_mode_touch">Touchpad</string>
     <string name="mouse_mode_direct">Direct touch</string>
+
+    <!-- v1.2.0 -->
+    <string name="panel_apps">Remote apps</string>
+    <string name="panel_quality">Quality</string>
+    <string name="panel_command">Remote command</string>
+    <string name="panel_diag">Diagnostics</string>
+    <string name="diag_copy">Copy diagnostics</string>
+    <string name="diag_share">Share</string>
+    <string name="diag_copied">Diagnostics copied to clipboard</string>
+    <string name="clip_mode_both">Two-way sync</string>
+    <string name="clip_mode_recv">Receive only (remote → local)</string>
+    <string name="clip_mode_send">Send only (local → remote)</string>
+    <string name="clip_mode_off">Auto sync off</string>
+    <string name="clip_current_mode">Current: %s (copies sync automatically)</string>
+    <string name="clip_action_pull">Pull clipboard from remote</string>
+    <string name="clip_action_push">Push local clipboard to remote</string>
+    <string name="clip_action_edit_send">Edit and send text…</string>
+    <string name="clip_action_settings">Clipboard sync settings…</string>
+    <string name="clip_mode_set">Clipboard mode: %s</string>
+    <string name="clip_pulling">Pulling remote clipboard…</string>
+    <string name="clip_local_empty">Local clipboard is empty</string>
+    <string name="clip_edit_hint">Text to send to the remote</string>
+    <string name="clip_image_saved">Remote image clipboard saved: %s</string>
+    <string name="clip_image_save_failed">Failed to save image clipboard</string>
+    <string name="apps_title">Remote apps</string>
+    <string name="apps_refresh">Refresh</string>
+    <string name="apps_search_hint">Search apps…</string>
+    <string name="apps_loading">Loading app catalog…</string>
+    <string name="apps_empty">No matching apps</string>
+    <string name="apps_load_failed">Failed to load catalog: %s</string>
+    <string name="apps_source_local">Catalog: server local repository</string>
+    <string name="apps_source_remote">Catalog: proot-apps online repository</string>
+    <string name="apps_launch">Launch</string>
+    <string name="apps_install">Install</string>
+    <string name="apps_update">Update</string>
+    <string name="apps_remove">Remove</string>
+    <string name="apps_more_actions">More actions</string>
+    <string name="apps_cmd_sent">Sent: %s</string>
+    <string name="apps_no_session">Session not connected</string>
+    <string name="apps_not_enabled">Apps panel disabled on server (ui_sidebar_show_apps)</string>
+    <string name="apps_installed_updated">Remote apps updated (%d total)</string>
+    <string name="quality_presets">Quality presets</string>
+    <string name="preset_smooth">Smooth</string>
+    <string name="preset_balance">Balanced</string>
+    <string name="preset_hd">HD</string>
+    <string name="preset_max">Ultra</string>
+    <string name="quality_fps_fmt">%d fps</string>
+    <string name="quality_bitrate_fmt">%d kbps</string>
+    <string name="quality_mode_cbr">CBR constant bitrate</string>
+    <string name="quality_mode_crf">CRF constant quality</string>
+    <string name="quality_applied">Quality applied (instant)</string>
+    <string name="quality_hot_hint">Applies instantly without reconnecting; also saved as defaults.</string>
+    <string name="command_not_enabled">Remote command disabled on server (command_enabled)</string>
+    <string name="command_hint">e.g. firefox or xdg-open ~/Documents</string>
+    <string name="command_desc">Run a shell command in the remote session</string>
+    <string name="command_sent">Command sent</string>
+    <string name="command_done">Command finished</string>
+
     <string name="kb_mod_ctrl">Ctrl</string>
     <string name="kb_mod_alt">Alt</string>
     <string name="kb_mod_shift">Shift</string>
@@ -133,6 +191,12 @@
     <string name="pref_cleared">Cleared</string>
     <string name="pref_about_app">Selkies native Android client v%1$s\nSelkies v2 WebSocket streaming protocol\nNative MediaCodec hardware decoding, no WebView\n\nhttps://github.com/cshdotcom/selkies-android</string>
 
+    <!-- v1.2.0: clipboard prefs -->
+    <string name="pref_clipboard_title">Clipboard sync</string>
+    <string name="pref_clipboard_mode">Direction</string>
+    <string name="pref_clipboard_binary">Binary clipboard (images)</string>
+    <string name="pref_clipboard_binary_desc">Sync image clipboard (server must allow it too)</string>
+
     <string-array name="framerate_entries">
         <item>30 fps</item>
         <item>60 fps</item>
@@ -176,5 +240,17 @@
     <string-array name="touch_mode_values">
         <item>trackpad</item>
         <item>direct</item>
+    </string-array>
+    <string-array name="clipboard_mode_entries">
+        <item>Two-way sync</item>
+        <item>Receive only (remote → local)</item>
+        <item>Send only (local → remote)</item>
+        <item>Auto sync off</item>
+    </string-array>
+    <string-array name="clipboard_mode_values">
+        <item>both</item>
+        <item>recv</item>
+        <item>send</item>
+        <item>off</item>
     </string-array>
 </resources>

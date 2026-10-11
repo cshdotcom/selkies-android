@@ -112,7 +112,7 @@ class ServerEditActivity : AppCompatActivity() {
         finish()
     }
 
-    /** 连接测试：走真实探测管线，测量端到端 RTT */
+    /** 连接测试：走真实探测管线 + WS 握手干跑，输出完整诊断报告 */
     private fun testConnection() {
         if (testing) return
         val cfg = collect() ?: return
@@ -141,8 +141,53 @@ class ServerEditActivity : AppCompatActivity() {
                     .encodeToString("${cfg.username}:${cfg.password ?: ""}".toByteArray())
             } else null
 
+            com.selkies.client.net.DiagLog.newSession()
+            com.selkies.client.net.DiagLog.i("连接测试: ${cfg.host}:${cfg.port}${cfg.normalizedPath}")
             val result = url?.let { EndpointProber.probe(it, auth, cfg.trustAllCerts) }
             val rtt = android.os.SystemClock.elapsedRealtime() - t0
+
+            // WS 握手干跑：探测成功后实际发起一次 WS 连接验证反代转发（连上即关）
+            var wsOk = false
+            var wsDetail = ""
+            if (result is EndpointProber.ProbeResult.Ready) {
+                try {
+                    val latch = java.util.concurrent.CountDownLatch(1)
+                    val wsClient = okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                        .apply { if (cfg.trustAllCerts) EndpointProber.applyTrustAll(this) }
+                        .build()
+                    val wsUrl = result.finalBase.newBuilder()
+                        .encodedPath(EndpointProber.joinPath(
+                            result.finalBase.encodedPath,
+                            result.wsPaths.firstOrNull() ?: "/api/websockets"))
+                        .build()
+                        .newBuilder()
+                        .scheme(if (result.finalBase.isHttps) "wss" else "ws")
+                        .build()
+                    com.selkies.client.net.DiagLog.i("WS 握手干跑: $wsUrl")
+                    val ws = wsClient.newWebSocket(
+                        EndpointProber.baseRequest(wsUrl, auth, headOnly = false).build(),
+                        object : okhttp3.WebSocketListener() {
+                            override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
+                                wsOk = true
+                                com.selkies.client.net.DiagLog.i("WS 干跑成功 (101)")
+                                webSocket.close(1000, "test done")
+                                latch.countDown()
+                            }
+
+                            override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
+                                wsDetail = "${t.javaClass.simpleName}: ${t.message} code=${response?.code ?: -1}"
+                                com.selkies.client.net.DiagLog.e("WS 干跑失败: $wsDetail")
+                                latch.countDown()
+                            }
+                        })
+                    latch.await(12, java.util.concurrent.TimeUnit.SECONDS)
+                    ws.cancel()
+                    wsClient.dispatcher.executorService.shutdown()
+                } catch (e: Exception) {
+                    wsDetail = e.message ?: e.javaClass.simpleName
+                }
+            }
 
             runOnUiThread {
                 testing = false
@@ -152,10 +197,16 @@ class ServerEditActivity : AppCompatActivity() {
                 when (result) {
                     is EndpointProber.ProbeResult.Ready -> {
                         tv.setTextColor(getColor(R.color.status_ok))
-                        tv.text = getString(
-                            if (rtt < 60_000) R.string.test_ok else R.string.test_ok_no_rtt,
-                            rtt.toInt()
-                        )
+                        tv.text = if (wsOk) {
+                            getString(
+                                if (rtt < 60_000) R.string.test_ok else R.string.test_ok_no_rtt,
+                                rtt.toInt()
+                            )
+                        } else {
+                            getString(R.string.test_failed, "WS: $wsDetail")
+                        }
+                        // 附加完整诊断报告查看
+                        if (!wsOk || rtt >= 60_000) showDiagReport()
                     }
                     is EndpointProber.ProbeResult.NeedAuth -> {
                         tv.setTextColor(getColor(R.color.status_warn))
@@ -169,6 +220,7 @@ class ServerEditActivity : AppCompatActivity() {
                             else -> result.reason
                         }
                         tv.text = getString(R.string.test_failed, reason)
+                        showDiagReport()
                     }
                     null -> {
                         tv.setTextColor(getColor(R.color.status_err))
@@ -177,5 +229,23 @@ class ServerEditActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /** 诊断报告（含复制按钮，便于回传排障） */
+    private fun showDiagReport() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.panel_diag)
+            .setMessage(com.selkies.client.net.DiagLog.tail(40))
+            .setPositiveButton(R.string.diag_copy) { _, _ ->
+                val cm = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cm.setPrimaryClip(
+                    android.content.ClipData.newPlainText(
+                        "selkies-diag", com.selkies.client.net.DiagLog.dump()
+                    )
+                )
+                Toast.makeText(this, R.string.diag_copied, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.close, null)
+            .show()
     }
 }

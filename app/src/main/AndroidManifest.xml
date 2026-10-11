@@ -72,5 +72,12 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:label="@string/shortcuts_title"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- 远程应用启动器（v1.2.0） -->
+        <activity
+            android:name=".ui.AppsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:label="@string/apps_title"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 </manifest>

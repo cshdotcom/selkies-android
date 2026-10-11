@@ -115,8 +115,8 @@ class ConnectionEngine(
         /** 摄像头上行被服务端拒绝 */
         fun onWebcamDisabled() { }
 
-        /** system 命令回执（command_error / command_done） */
-        fun onSystemCommand(action: String, detail: String?) { }
+        /** system 命令回执（command_error,/command_done,/apps_installed,/reload 前缀） */
+        fun onSystemCommand(action: String) { }
 
         /** 统计快照（每秒） */
         fun onStats(stats: Stats)
@@ -154,6 +154,12 @@ class ConnectionEngine(
         listOf(Protocol.WS_PATH_PRIMARY, Protocol.WS_PATH_FALLBACK)
     @Volatile private var basicAuthUser: String? = config.username
     @Volatile private var basicAuthPass: String? = config.password
+
+    // ---- v1.2.0：多策略 WS 握手 ----
+    /** 握手策略游标：0=完整浏览器头 1=无 Origin 2=极简头。握手期网络层失败时逐个轮换重试 */
+    @Volatile private var wsStrategy = 0
+    /** 本次连接尝试是否已到达 onOpen（区分握手期失败与会话中断） */
+    @Volatile private var wsOpenedThisAttempt = false
 
     /** 媒体接收端（未装配时直接丢帧） */
     @Volatile var mediaSink: MediaSink? = null
@@ -225,6 +231,9 @@ class ConnectionEngine(
         if (closed.get()) return
         if (state != State.DISCONNECTED && state != State.FAILED) return
         userRequestedDisconnect.set(false)
+        wsStrategy = 0 // 用户主动连接：从默认策略开始
+        DiagLog.newSession()
+        DiagLog.i("连接启动: ${config.host}:${config.port}${config.normalizedPath} https=${config.https}")
         startConnectThread()
     }
 
@@ -245,6 +254,7 @@ class ConnectionEngine(
         basicAuthPass = pass
         if (state == State.NEED_AUTH) {
             probedBase = null // 强制重新探测
+            DiagLog.i("凭据已提供，重新探测")
             Thread {
                 try {
                     connectInternal()
@@ -321,15 +331,19 @@ class ConnectionEngine(
         var base = probedBase
         if (base == null) {
             val initialBase = buildInitialUrl() ?: run {
+                DiagLog.e("地址无效: ${config.host}")
                 postState(State.FAILED, "invalid address")
                 return
             }
+            DiagLog.i("探测 ${initialBase}")
             when (val r = EndpointProber.probe(initialBase, currentAuthHeader, config.trustAllCerts)) {
                 is EndpointProber.ProbeResult.NeedAuth -> {
+                    DiagLog.w("需要 Basic 认证 (realm=${r.realm})")
                     postState(State.NEED_AUTH)
                     return
                 }
                 is EndpointProber.ProbeResult.Failed -> {
+                    DiagLog.e("探测失败: ${r.reason} ${r.detail ?: ""}")
                     handleConnectFailure("probe: ${r.reason}", r.detail)
                     return
                 }
@@ -338,6 +352,7 @@ class ConnectionEngine(
                     probedBase = r.finalBase
                     probedPaths = r.wsPaths
                     wsPathIndex = 0
+                    DiagLog.i("探测成功: base=${r.finalBase} wsPaths=${r.wsPaths}")
                 }
             }
         }
@@ -346,7 +361,9 @@ class ConnectionEngine(
         // 3. 清理旧连接资源后发起 WS
         cleanupOldSocket()
         postState(State.CONNECTING)
-        openWebSocket(base!!, probedPaths[wsPathIndex.coerceIn(0, probedPaths.size - 1)])
+        val path = probedPaths[wsPathIndex.coerceIn(0, probedPaths.size - 1)]
+        DiagLog.i("WS 握手: $base$path (策略 $wsStrategy: ${strategyName(wsStrategy)})")
+        openWebSocket(base!!, path)
     }
 
     /** 关闭上一轮残留的 socket / client（重连与路径回退时调用） */
@@ -402,8 +419,17 @@ class ConnectionEngine(
         val c = clientBuilder.build()
         client = c
 
-        val reqBuilder = EndpointProber.baseRequest(wsUrl, currentAuthHeader, headOnly = false)
+        wsOpenedThisAttempt = false
+        val reqBuilder = EndpointProber.baseRequest(wsUrl, currentAuthHeader, headOnly = false, strategy = wsStrategy)
         webSocket = c.newWebSocket(reqBuilder.build(), WsListener())
+    }
+
+    /** 握手策略名称（诊断用） */
+    private fun strategyName(s: Int): String = when (s) {
+        0 -> "浏览器头"
+        1 -> "无 Origin"
+        2 -> "极简头"
+        else -> "?"
     }
 
     // ------------------------------------------------------------------
@@ -415,6 +441,8 @@ class ConnectionEngine(
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.i(TAG, "WS open: ${response.request.url}")
             this@ConnectionEngine.webSocket = webSocket
+            wsOpenedThisAttempt = true
+            DiagLog.i("WS 已连接 (策略 $wsStrategy): ${response.request.url}")
             reconnectAttempt = 0
             postState(State.CONNECTED)
 
@@ -428,7 +456,8 @@ class ConnectionEngine(
             sendText("SETTINGS," + Protocol.buildSettingsJson(
                 clientWidth, clientHeight,
                 settings.framerate, settings.videoCrf, settings.videoBitrate,
-                settings.rateControl, settings.audioBitrate
+                settings.rateControl, settings.audioBitrate,
+                settings.clipboardBinary
             ))
             sendText("cr")
 
@@ -457,25 +486,42 @@ class ConnectionEngine(
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            Log.w(TAG, "WS failure: ${t.message} code=${response?.code}")
-            if (closed.get() || userRequestedDisconnect.get()) return
             val code = response?.code ?: -1
+            Log.w(TAG, "WS failure: ${t.message} code=$code")
+            if (closed.get() || userRequestedDisconnect.get()) return
             when {
                 code == 401 -> {
                     // 凭据缺失/失效（Selkies Basic 层或反代层）
+                    DiagLog.w("WS 握手 401：需要认证")
                     postState(State.NEED_AUTH)
                 }
                 code == 404 && wsPathIndex < probedPaths.size - 1 -> {
                     // 路径回退：/api/websockets 404 → /api/ws
-                    Log.i(TAG, "path 404, falling back to ${probedPaths[wsPathIndex + 1]}")
+                    DiagLog.i("路径 404，回退到 ${probedPaths[wsPathIndex + 1]}")
                     wsPathIndex++
                     main.postDelayed({ startConnectThread() }, 200)
                 }
                 code == 4029 -> {
                     // 服务端重连防抖：加大退避
+                    DiagLog.w("服务端防抖 4029，延迟重连")
                     scheduleReconnect(extraDelayMs = 2000L)
                 }
-                else -> handleConnectFailure("ws: ${t.message}", "code=$code")
+                else -> {
+                    // v1.2.0 核心修复：握手期网络层失败（unexpected end of stream 等）
+                    // 或服务器错误码 → 先轮换握手策略重试，全部失败才进入重连/失败。
+                    // 会话中断（已 onOpen 过）不轮换，直接走重连。
+                    if (!wsOpenedThisAttempt && wsStrategy < WS_STRATEGY_MAX) {
+                        wsStrategy++
+                        DiagLog.w(
+                            "WS 失败(${t.javaClass.simpleName}: ${t.message} code=$code) → " +
+                                    "改用策略 $wsStrategy(${strategyName(wsStrategy)}) 重试"
+                        )
+                        main.postDelayed({ startConnectThread() }, 300)
+                    } else {
+                        DiagLog.e("WS 失败: ${t.javaClass.simpleName}: ${t.message} code=$code")
+                        handleConnectFailure("ws: ${t.message}", "code=$code", httpCode = code)
+                    }
+                }
             }
         }
 
@@ -651,8 +697,7 @@ class ConnectionEngine(
                 "system" -> {
                     val action = o.optString("action")
                     if (action.isNotEmpty()) {
-                        val detail = o.optString("message", o.optString("error", null))
-                        main.post { listener.onSystemCommand(action, detail) }
+                        main.post { listener.onSystemCommand(action) }
                     }
                 }
             }
@@ -804,6 +849,16 @@ class ConnectionEngine(
     /** 主动拉取远端剪贴板（REQUEST_CLIPBOARD） */
     fun requestClipboard() = sendText("REQUEST_CLIPBOARD")
 
+    /** 本地剪贴板二进制 → 远端（图片等）：cb,<mime>,<b64>（小负载单发） */
+    fun sendClipboardBinary(mime: String, data: ByteArray) {
+        if (data.isEmpty() || data.size > 2 * 1024 * 1024) return // 过大不传（官方小负载路径）
+        try {
+            sendInput("cb,$mime," + java.util.Base64.getEncoder().encodeToString(data))
+        } catch (e: Exception) {
+            Log.w(TAG, "sendClipboardBinary: ${e.message}")
+        }
+    }
+
     // ------------------------------------------------------------------
     // 输入原语（InputController 复用；view-only 门禁在此再次生效 = 双保险）
     // ------------------------------------------------------------------
@@ -840,6 +895,23 @@ class ConnectionEngine(
     fun commitText(text: String) = sendInput("co,end,$text")
 
     // ------------------------------------------------------------------
+    // v1.2.0：热更新 SETTINGS（部分载荷，官方 sendFullSettingsUpdateToServer 同款机制）
+    // ------------------------------------------------------------------
+
+    /** 发送部分 SETTINGS 更新（仅变更的键；服务端热应用，无需重连） */
+    fun sendSettingsUpdate(json: JSONObject) {
+        sendText("SETTINGS,$json")
+        DiagLog.i("热更新 SETTINGS: $json")
+    }
+
+    /** 远程命令执行：cmd,<command>（服务端 command_enabled 门禁；回执 system 消息） */
+    fun sendCommand(command: String) {
+        if (!inputAllowed) return
+        sendText("cmd,$command")
+        DiagLog.i("发送远程命令: $command")
+    }
+
+    // ------------------------------------------------------------------
     // 二进制上行（麦克风 0x02 / 摄像头 0x06 —— 官方 websockets 模式上行链路）
     // ------------------------------------------------------------------
 
@@ -873,16 +945,17 @@ class ConnectionEngine(
     // 失败处理与自动重连
     // ------------------------------------------------------------------
 
-    private fun handleConnectFailure(reason: String, detail: String?) {
+    private fun handleConnectFailure(reason: String, detail: String?, httpCode: Int = -1) {
         if (closed.get() || userRequestedDisconnect.get()) return
         Log.w(TAG, "connect failure: $reason $detail")
+        val human = DiagLog.humanizeReason(reason, httpCode)
         if (!settings.autoReconnect) {
-            postState(State.FAILED, reason)
+            postState(State.FAILED, "$reason｜$human")
             return
         }
         val max = settings.maxReconnects
         if (max in 1..reconnectAttempt) {
-            postState(State.FAILED, "reconnect limit")
+            postState(State.FAILED, "$reason｜重连已达上限｜$human")
             return
         }
         scheduleReconnect()
@@ -911,5 +984,7 @@ class ConnectionEngine(
         private const val STATS_INTERVAL_MS = 1000L
         private const val CLIPBOARD_CHUNK_RAW = 768 * 1024
         private const val CLIPBOARD_MAX = 32L * 1024 * 1024
+        /** 握手策略总数（0/1/2） */
+        private const val WS_STRATEGY_MAX = 2
     }
 }

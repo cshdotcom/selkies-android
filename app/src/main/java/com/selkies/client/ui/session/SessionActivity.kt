@@ -3,13 +3,17 @@ package com.selkies.client.ui.session
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.input.InputManager
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.InputDevice
 import android.view.KeyEvent
@@ -18,9 +22,13 @@ import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -40,10 +48,14 @@ import com.selkies.client.media.MicUplink
 import com.selkies.client.media.VideoDecoder
 import com.selkies.client.media.WebcamUplink
 import com.selkies.client.net.ConnectionEngine
+import com.selkies.client.net.DiagLog
 import com.selkies.client.net.FilesApi
+import com.selkies.client.net.SessionBridge
+import com.selkies.client.ui.AppsActivity
 import com.selkies.client.ui.FilesActivity
 import com.selkies.client.ui.PrintHelper
 import com.selkies.client.ui.ShortcutsActivity
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import kotlin.concurrent.thread
@@ -109,6 +121,19 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     // IME 直通层
     private lateinit var imeCapture: ImeCaptureView
 
+    // v1.2.0：剪贴板双向同步状态
+    private var clipListener: ClipboardManager.OnPrimaryClipChangedListener? = null
+    /** 回声抑制：最近一次从远端收到的剪贴板文本（避免回环） */
+    private var lastRemoteClip: String = ""
+    /** 最近一次本地推送到远端的文本（同样抑制） */
+    private var lastLocalPush: String = ""
+    private val clipPushDebounce = Runnable { pushLocalClipboardNow() }
+
+    // v1.2.0：应用启动器 / 命令能力（server_settings 解析）
+    private var appsAvailable = false
+    private var commandEnabled = false
+    private var appsLocalRepo = false
+
     // ------------------------------------------------------------------
     // 生命周期
     // ------------------------------------------------------------------
@@ -157,6 +182,10 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         setupIme()
         setupAuthBox()
         setupHardwareKeyboardDetection()
+        setupClipboardSync()
+
+        // 跨页命令桥：AppsActivity 通过它发送 cmd 命令
+        SessionBridge.sendCommand = { cmd -> engine.sendCommand(cmd) }
 
         engine.connect()
     }
@@ -189,6 +218,16 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
             }
         } catch (_: Exception) {
         }
+        // 注销剪贴板监听与会话桥，防泄漏
+        try {
+            clipListener?.let {
+                (getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)
+                    ?.removePrimaryClipChangedListener(it)
+            }
+        } catch (_: Exception) {
+        }
+        SessionBridge.sendCommand = null
+        SessionBridge.onInstalledChanged = null
         micUplink?.stop(); micUplink = null
         webcamUplink?.stop(); webcamUplink = null
         if (this::engine.isInitialized) {
@@ -424,6 +463,12 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
             finish()
         }
 
+        // ---- v1.2.0 第三行按钮 ----
+        binding.btnApps.setOnClickListener { openAppsLauncher() }
+        binding.btnQuality.setOnClickListener { showQualityDialog() }
+        binding.btnCommand.setOnClickListener { showCommandDialog() }
+        binding.btnDiag.setOnClickListener { showDiagnostics() }
+
         binding.btnReconnect.setOnClickListener {
             binding.btnReconnect.visibility = View.GONE
             engine.connect()
@@ -623,29 +668,80 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     // ------------------------------------------------------------------
 
     private fun showClipboardDialog() {
+        val modeNames = arrayOf(
+            getString(R.string.clip_mode_both),
+            getString(R.string.clip_mode_recv),
+            getString(R.string.clip_mode_send),
+            getString(R.string.clip_mode_off)
+        )
+        val modeValues = arrayOf("both", "recv", "send", "off")
+        val modeIdx = modeValues.indexOf(settings.clipboardMode).coerceAtLeast(0)
         val items = arrayOf(
-            getString(R.string.panel_clipboard_sent),
-            getString(R.string.panel_clipboard_got)
+            getString(R.string.clip_action_pull),
+            getString(R.string.clip_action_push),
+            getString(R.string.clip_action_edit_send),
+            getString(R.string.clip_action_settings)
         )
         android.app.AlertDialog.Builder(this)
             .setTitle(R.string.panel_clipboard_sync)
+            .setMessage(getString(R.string.clip_current_mode, modeNames[modeIdx]))
             .setItems(items) { _, which ->
-                if (which == 0) sendLocalClipboard() else engine.requestClipboard()
+                when (which) {
+                    0 -> {
+                        engine.requestClipboard()
+                        toast(getString(R.string.clip_pulling))
+                    }
+                    1 -> sendLocalClipboard()
+                    2 -> showEditClipboardDialog()
+                    3 -> {
+                        android.app.AlertDialog.Builder(this)
+                            .setTitle(R.string.clip_action_settings)
+                            .setSingleChoiceItems(modeNames, modeIdx) { d, sel ->
+                                settings.clipboardMode = modeValues[sel]
+                                applyClipboardSyncMode()
+                                toast(getString(R.string.clip_mode_set, modeNames[sel]))
+                                d.dismiss()
+                            }
+                            .setNegativeButton(R.string.cancel, null)
+                            .show()
+                    }
+                }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
-    /** 本地 → 远端 */
+    /** 编辑文本发送到远端（任意内容，不必依赖本地剪贴板） */
+    private fun showEditClipboardDialog() {
+        val edit = EditText(this)
+        edit.hint = getString(R.string.clip_edit_hint)
+        edit.setText(lastRemoteClip)
+        edit.minLines = 3
+        android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.clip_action_edit_send)
+            .setView(edit)
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                val text = edit.text.toString()
+                if (text.isNotEmpty()) {
+                    engine.sendClipboardText(text)
+                    toast(getString(R.string.panel_clipboard_sent))
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /** 本地 → 远端（手动） */
     private fun sendLocalClipboard() {
         try {
             val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val text = cm.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString() ?: ""
             if (text.isEmpty()) {
-                toast(getString(R.string.panel_clipboard_sent) + " (empty)")
+                toast(getString(R.string.clip_local_empty))
                 return
             }
             engine.sendClipboardText(text)
+            lastLocalPush = text
             toast(getString(R.string.panel_clipboard_sent))
         } catch (e: Exception) {
             Log.w(TAG, "read local clipboard: ${e.message}")
@@ -661,6 +757,225 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         } catch (e: Exception) {
             Log.w(TAG, "set local clipboard: ${e.message}")
         }
+    }
+
+    // ------------------------------------------------------------------
+    // 剪贴板双向自动同步（v1.2.0）：本地监听 → cw 上行；远端下行 → 本地写入
+    // ------------------------------------------------------------------
+
+    /** 注册本地剪贴板变化监听（按设置方向动态启停） */
+    private fun setupClipboardSync() {
+        clipListener = ClipboardManager.OnPrimaryClipChangedListener {
+            // 防抖：短时间连续变化只推一次
+            binding.root.removeCallbacks(clipPushDebounce)
+            binding.root.postDelayed(clipPushDebounce, 400)
+        }
+        applyClipboardSyncMode()
+    }
+
+    /** 按当前模式注册/注销监听 */
+    private fun applyClipboardSyncMode() {
+        try {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipListener?.let { cm.removePrimaryClipChangedListener(it) }
+            if (settings.clipboardSend) {
+                clipListener?.let { cm.addPrimaryClipChangedListener(it) }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "applyClipboardSyncMode: ${e.message}")
+        }
+    }
+
+    /** 本地剪贴板变化 → 推送到远端（回声抑制 + 图片二进制） */
+    private fun pushLocalClipboardNow() {
+        if (!settings.clipboardSend || roleCapped || input.viewOnly) return
+        try {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = cm.primaryClip ?: return
+            if (clip.itemCount == 0) return
+            val item = clip.getItemAt(0)
+
+            // 文本优先
+            val text = item.coerceToText(this)?.toString() ?: ""
+            if (text.isNotEmpty()) {
+                if (text == lastRemoteClip || text == lastLocalPush) return // 回声抑制
+                if (text.length > 1_000_000) return // 过大不自动推
+                engine.sendClipboardText(text)
+                lastLocalPush = text
+                return
+            }
+
+            // 图片：URI 读取后 cb 上行（需二进制剪贴板开启）
+            if (settings.clipboardBinary) {
+                val uri = item.uri ?: return
+                val mime = try {
+                    contentResolver.getType(uri) ?: "image/png"
+                } catch (_: Exception) {
+                    "image/png"
+                }
+                if (!mime.startsWith("image/")) return
+                thread(name = "clip-img-push") {
+                    try {
+                        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                        if (bytes != null && bytes.size in 1..(2 * 1024 * 1024)) {
+                            engine.sendClipboardBinary(mime, bytes)
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "clip image read: ${e.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "pushLocalClipboard: ${e.message}")
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // v1.2.0：远程应用启动器 / 画质热切换 / 远程命令 / 诊断
+    // ------------------------------------------------------------------
+
+    private fun openAppsLauncher() {
+        if (!appsAvailable) {
+            toast(getString(R.string.apps_not_enabled))
+            return
+        }
+        config?.let { c ->
+            startActivity(
+                Intent(this, AppsActivity::class.java)
+                    .putExtra(AppsActivity.EXTRA_SERVER_ID, c.id)
+                    .putExtra(AppsActivity.EXTRA_LOCAL_REPO, appsLocalRepo)
+                    .putExtra(AppsActivity.EXTRA_COMMAND_ENABLED, commandEnabled)
+            )
+        }
+    }
+
+    /** 画质热切换：部分 SETTINGS 载荷即时生效（官方 sendFullSettingsUpdateToServer 同款机制） */
+    private fun showQualityDialog() {
+        val view = layoutInflater.inflate(R.layout.dialog_quality, null)
+        val seekCrf = view.findViewById<SeekBar>(R.id.seek_crf)
+        val valCrf = view.findViewById<TextView>(R.id.val_crf)
+        val seekBitrate = view.findViewById<SeekBar>(R.id.seek_bitrate)
+        val valBitrate = view.findViewById<TextView>(R.id.val_bitrate)
+        val txtFps = view.findViewById<TextView>(R.id.val_framerate)
+        val txtMode = view.findViewById<TextView>(R.id.val_rate_mode)
+
+        var fps = settings.framerate
+        var crf = settings.videoCrf
+        var bitrate = settings.videoBitrate
+        var mode = settings.rateControl
+
+        fun syncLabels() {
+            valCrf.text = crf.toString()
+            valBitrate.text = getString(R.string.quality_bitrate_fmt, bitrate)
+            txtFps.text = getString(R.string.quality_fps_fmt, fps)
+            txtMode.text = getString(if (mode == "cbr") R.string.quality_mode_cbr else R.string.quality_mode_crf)
+        }
+
+        // 预设
+        view.findViewById<Button>(R.id.preset_smooth).setOnClickListener { fps = 15; crf = 32; bitrate = 2500; mode = "cbr"; syncLabels() }
+        view.findViewById<Button>(R.id.preset_balance).setOnClickListener { fps = 30; crf = 25; bitrate = 8000; mode = "cbr"; syncLabels() }
+        view.findViewById<Button>(R.id.preset_hd).setOnClickListener { fps = 30; crf = 20; bitrate = 16000; mode = "cbr"; syncLabels() }
+        view.findViewById<Button>(R.id.preset_max).setOnClickListener { fps = 60; crf = 16; bitrate = 30000; mode = "cbr"; syncLabels() }
+
+        // 帧率
+        view.findViewById<Button>(R.id.btn_fps_down).setOnClickListener { fps = (fps - 5).coerceIn(10, 60); syncLabels() }
+        view.findViewById<Button>(R.id.btn_fps_up).setOnClickListener { fps = (fps + 5).coerceIn(10, 60); syncLabels() }
+
+        // 码率模式
+        view.findViewById<Button>(R.id.btn_mode_toggle).setOnClickListener {
+            mode = if (mode == "cbr") "crf" else "cbr"
+            syncLabels()
+        }
+
+        seekCrf.max = 51
+        seekCrf.progress = crf
+        seekCrf.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, v: Int, fromUser: Boolean) {
+                crf = v; syncLabels()
+            }
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        seekBitrate.max = 100 // 500..50500 kbps
+        seekBitrate.progress = ((bitrate - 500) / 500).coerceIn(0, 100)
+        seekBitrate.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, v: Int, fromUser: Boolean) {
+                bitrate = 500 + v * 500; syncLabels()
+            }
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        syncLabels()
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.panel_quality)
+            .setView(view)
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                // 持久化
+                settings.framerate = fps
+                settings.videoCrf = crf
+                settings.videoBitrate = bitrate
+                settings.rateControl = mode
+                // 热更新（仅变更键的部分载荷，服务端即时应用）
+                val o = JSONObject()
+                o.put("framerate", fps)
+                o.put("video_crf", crf)
+                o.put("video_bitrate", bitrate)
+                o.put("rate_control_mode", mode)
+                engine.sendSettingsUpdate(o)
+                toast(getString(R.string.quality_applied))
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /** 远程命令执行（cmd,<command>；服务端 command_enabled 开关门禁） */
+    private fun showCommandDialog() {
+        if (!commandEnabled) {
+            toast(getString(R.string.command_not_enabled))
+            return
+        }
+        val edit = EditText(this)
+        edit.hint = getString(R.string.command_hint)
+        android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.panel_command)
+            .setMessage(getString(R.string.command_desc))
+            .setView(edit)
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                val cmd = edit.text.toString().trim()
+                if (cmd.isNotEmpty()) {
+                    engine.sendCommand(cmd)
+                    toast(getString(R.string.command_sent))
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /** 连接诊断：查看并复制/分享诊断日志 */
+    private fun showDiagnostics() {
+        val text = DiagLog.dump()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.panel_diag)
+            .setMessage(DiagLog.tail(30))
+            .setPositiveButton(R.string.diag_copy) { _, _ ->
+                val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("selkies-diag", text))
+                toast(getString(R.string.diag_copied))
+            }
+            .setNeutralButton(R.string.diag_share) { _, _ ->
+                val send = Intent(Intent.ACTION_SEND)
+                    .setType("text/plain")
+                    .putExtra(Intent.EXTRA_TEXT, text)
+                try {
+                    startActivity(Intent.createChooser(send, getString(R.string.panel_diag)))
+                } catch (_: Exception) {
+                }
+            }
+            .setNegativeButton(R.string.close, null)
+            .show()
     }
 
     // ------------------------------------------------------------------
@@ -938,6 +1253,42 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
             }
         } catch (_: Exception) {
         }
+
+        // v1.2.0：应用启动器 / 命令能力门禁（对照官方 server_settings 载荷）
+        try {
+            appsAvailable = settingBool(settings, "ui_sidebar_show_apps", false)
+            commandEnabled = settingBool(settings, "command_enabled", false)
+            appsLocalRepo = settingBool(settings, "apps_local_repo", false)
+            runOnUiThread {
+                binding.btnApps.visibility = if (appsAvailable) View.VISIBLE else View.GONE
+                binding.btnCommand.visibility = if (commandEnabled) View.VISIBLE else View.GONE
+            }
+            // 已安装集合（apps_installed 可能是 ["name",...] 或 [{value:[...]}] 形态）
+            val installed = when (val v = settings.opt("apps_installed")) {
+                is org.json.JSONArray -> v
+                is org.json.JSONObject -> v.optJSONArray("value")
+                else -> null
+            }
+            if (installed != null) {
+                val set = HashSet<String>()
+                for (i in 0 until installed.length()) set.add(installed.optString(i))
+                SessionBridge.installedApps = set
+                SessionBridge.onInstalledChanged?.invoke()
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    /** server_settings 的值可能是裸布尔、[bool]、或 {value:...} 三种形态 */
+    private fun settingBool(o: JSONObject, key: String, def: Boolean): Boolean = try {
+        when (val v = o.opt(key)) {
+            is Boolean -> v
+            is org.json.JSONArray -> v.optBoolean(0, def)
+            is org.json.JSONObject -> v.optBoolean("value", def)
+            else -> def
+        }
+    } catch (_: Exception) {
+        def
     }
 
     override fun onStreamResolution(width: Int, height: Int) {
@@ -981,11 +1332,41 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
     }
 
     override fun onClipboardText(text: String) {
-        if (text.isNotEmpty()) setLocalClipboard(text)
+        lastRemoteClip = text
+        if (text.isNotEmpty() && settings.clipboardRecv) {
+            setLocalClipboard(text)
+        }
     }
 
     override fun onClipboardBinary(mime: String, data: ByteArray) {
-        toast(getString(R.string.panel_clipboard_got) + " ($mime ${data.size / 1024}KB)")
+        if (!settings.clipboardRecv) {
+            toast(getString(R.string.panel_clipboard_got) + " ($mime ${data.size / 1024}KB)")
+            return
+        }
+        // 图片剪贴板 → 保存到下载目录（Android 无法直接把图片字节写入系统剪贴板）
+        if (mime.startsWith("image/")) {
+            val ext = when {
+                mime.contains("png") -> "png"
+                mime.contains("jpeg") || mime.contains("jpg") -> "jpg"
+                mime.contains("webp") -> "webp"
+                else -> "img"
+            }
+            thread(name = "clip-img-save") {
+                val saved = FilesApi.saveToDownloads(
+                    this,
+                    "selkies_clip_${System.currentTimeMillis()}.$ext",
+                    mime
+                ) { data }
+                runOnUiThread {
+                    toast(
+                        if (saved != null) getString(R.string.clip_image_saved, saved)
+                        else getString(R.string.clip_image_save_failed)
+                    )
+                }
+            }
+        } else {
+            toast(getString(R.string.panel_clipboard_got) + " ($mime ${data.size / 1024}KB)")
+        }
     }
 
     override fun onRoleCappedToViewer() {
@@ -1043,9 +1424,34 @@ class SessionActivity : AppCompatActivity(), ConnectionEngine.Listener {
         toast(getString(R.string.webcam_disabled_remote))
     }
 
-    override fun onSystemCommand(action: String, detail: String?) {
-        if (action == "command_error") {
-            toast(getString(R.string.command_error) + (detail?.let { ": $it" } ?: ""))
+    override fun onSystemCommand(action: String) {
+        when {
+            // system,{"action":"command_error,<text>"}
+            action.startsWith("command_error,") -> {
+                toast(getString(R.string.command_error) + ": " + action.removePrefix("command_error,").take(120))
+            }
+            // system,{"action":"command_done,<cmd>"}
+            action.startsWith("command_done,") -> {
+                val cmd = action.removePrefix("command_done,")
+                DiagLog.i("命令完成: $cmd")
+            }
+            // system,{"action":"apps_installed,[...]"} —— 安装/卸载/更新后广播
+            action.startsWith("apps_installed,") -> {
+                try {
+                    val arr = JSONArray(action.removePrefix("apps_installed,"))
+                    val set = HashSet<String>()
+                    for (i in 0 until arr.length()) set.add(arr.optString(i))
+                    SessionBridge.installedApps = set
+                    SessionBridge.onInstalledChanged?.invoke()
+                    toast(getString(R.string.apps_installed_updated, set.size))
+                } catch (_: Exception) {
+                }
+            }
+            action == "reload" -> {
+                // 服务端要求重载：重新请求关键帧并拉取状态
+                engine.requestKeyframe()
+                engine.requestClipboard()
+            }
         }
     }
 
