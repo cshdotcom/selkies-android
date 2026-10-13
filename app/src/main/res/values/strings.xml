@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Selkies 远程桌面</string>
+    <string name="title_edit_server">编辑服务器</string>
+    <string name="title_add_server">新增服务器</string>
+    <string name="title_settings">设置</string>
+
+    <string name="empty_hint">还没有服务器配置。\n点击右下角 + 新增一条，\n或到设置里了解部署要点。</string>
+
+    <string name="action_connect">连接</string>
+    <string name="action_edit">编辑</string>
+    <string name="action_set_default">设为默认</string>
+    <string name="action_test">测试连接</string>
+    <string name="action_delete">删除</string>
+    <string name="confirm_delete">确定删除该服务器配置？</string>
+    <string name="testing">正在测试连接…</string>
+    <string name="test_result">测试结果</string>
+
+    <string name="err_host">请输入服务器地址</string>
+    <string name="err_port">端口不合法</string>
+    <string name="err_no_config">未找到服务器配置</string>
+
+    <string name="mode_view_only">仅查看</string>
+    <string name="mode_control">可控制</string>
+
+    <string name="fmt_bitrate">码率 %1$d kbps</string>
+    <string name="fmt_fps">%1$d fps</string>
+    <string name="fmt_scroll_px">滚动步长 %1$d px</string>
+    <string name="fmt_stats">分辨率 %1$dx%2$d\n帧率 %3$d fps\n码率 %4$d kbps\nRTT %5$d ms\n待发帧 %6$d</string>
+    <string name="fmt_volume">音量 %1$d%%</string>
+
+    <string name="lp_right">长按 = 右键</string>
+    <string name="lp_middle">长按 = 中键</string>
+    <string name="lp_none">长按 = 无动作</string>
+
+    <string name="clear_pw_title">清除已存密码</string>
+    <string name="clear_pw_msg">将清除所有服务器配置中保存的账号与密码（地址配置保留）。继续？</string>
+    <string name="clear_pw_done">已清除全部已存凭据</string>
+
+    <string name="auth_title">服务器需要登录（%1$s）</string>
+    <string name="auth_user">用户名</string>
+    <string name="auth_pass">密码</string>
+
+    <string name="btn_keyboard">键盘</string>
+    <string name="btn_idr">关键帧</string>
+    <string name="btn_audio_on">声音开</string>
+    <string name="btn_audio_off">声音关</string>
+    <string name="btn_mode_view">查看中</string>
+    <string name="btn_mode_control">控制中</string>
+    <string name="btn_clipboard">剪贴板</string>
+    <string name="btn_upload">上传</string>
+    <string name="btn_fit">适配</string>
+    <string name="btn_stats">统计</string>
+    <string name="btn_hide">隐藏</string>
+    <string name="btn_disconnect">断开</string>
+
+    <string name="idr_sent">已请求关键帧（REQUEST_KEYFRAME）</string>
+    <string name="fit_applied">已恢复适配缩放</string>
+    <string name="panel_hidden_hint">面板已隐藏：点击顶部状态条恢复</string>
+    <string name="confirm_disconnect">断开连接并退出远程会话？</string>
+
+    <string name="clipboard_in">远端剪贴板已同步到本机</string>
+    <string name="clipboard_out">本机剪贴板已推送到远端</string>
+    <string name="clipboard_prompt">本机当前剪贴板：\n%1$s\n\n【推送】发送到远端；【拉取】向远端请求最新内容。</string>
+    <string name="clip_push">推送到远端</string>
+    <string name="clip_pull">从远端拉取</string>
+
+    <string name="upload_started">开始上传：%1$s</string>
+    <string name="mode_switched_view">已切换为仅查看（输入已禁用）</string>
+    <string name="mode_switched_control">已切换为控制模式</string>
+
+    <string name="section_quality">画质</string>
+    <string name="section_behavior">音频与行为</string>
+    <string name="section_gesture">手势</string>
+    <string name="section_security">密钥管理</string>
+    <string name="section_about">关于</string>
+    <string name="sw_match_res">连接时匹配屏幕分辨率</string>
+    <string name="sw_audio">启用音频流（Opus）</string>
+    <string name="sw_clipboard">剪贴板双向同步</string>
+    <string name="sw_reconnect">断线自动重连</string>
+    <string name="sw_keep_on">保持屏幕常亮</string>
+    <string name="sw_auto_kb">打开键盘面板时自动弹出输入法</string>
+    <string name="sw_natural">自然滚动方向（触控板式）</string>
+    <string name="btn_clear_pw">清除所有已保存的密码</string>
+    <string name="hint_long_press">长按动作</string>
+    <string name="hint_fps">帧率上限</string>
+    <string name="port_hint">常见端口：3000(HTTP)/3001(HTTPS)/6900/443(反代)</string>
+
+    <string name="about_text">Selkies 原生安卓客户端 v%1$s\n原生 WebSocket 协议直连 Selkies 2.0（linuxserver/webtop）\nMediaCodec H264 硬解 · Opus 音频 · 无 WebView\n\n开源地址见 README（github.com/cshdotcom/selkies-android）</string>
+</resources>

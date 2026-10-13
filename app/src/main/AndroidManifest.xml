@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 网络：WS/HTTP/上传 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 手柄震动（服务端 rumble） -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- 局域网 http 明文流允许（公网建议 https） -->
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Selkies"
+        android:usesCleartextTraffic="true">
+
+    <activity
+        android:name=".MainActivity"
+        android:exported="true"
+        android:label="@string/app_name">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+
+    <activity
+        android:name=".EditServerActivity"
+        android:exported="false"
+        android:label="@string/title_edit_server"
+        android:windowSoftInputMode="adjustResize" />
+
+    <activity
+        android:name=".SettingsActivity"
+        android:exported="false"
+        android:label="@string/title_settings" />
+
+    <activity
+        android:name=".RemoteActivity"
+        android:exported="false"
+        android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|uiMode|navigation"
+        android:launchMode="singleTask"
+        android:theme="@style/Theme.Selkies.Remote" />
+    </application>
+</manifest>
